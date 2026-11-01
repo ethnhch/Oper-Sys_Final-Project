@@ -16,23 +16,21 @@ import java.util.Random;
 
 /** Module 6: memory allocation and fragmentation. */
 final class FragmentationPanel extends ModulePanel {
-    private final InputTable blocks = new InputTable("Memory blocks / holes", "Size");
-    private final InputTable processes = new InputTable("Processes", "Process", "Size");
+    private final InputTable blocks = table(new InputTable("Memory blocks / holes", "Size"), "Block row ");
+    private final InputTable processes = table(new InputTable("Processes", "Process", "Size"), "Process row ");
     private final JComboBox<Strategy> strategy = new JComboBox<>(Strategy.values());
     private final JComboBox<Mode> mode = new JComboBox<>(Mode.values());
 
     FragmentationPanel() {
-        super("<b>Fragmentation</b> - enter any number of memory blocks and processes. <i>Fixed partitions</i> show internal "
-                + "fragmentation (unused space inside an allocated block); <i>dynamic partitions</i> split blocks and expose "
-                + "external fragmentation (enough free memory in total, but no single hole large enough).");
-        JPanel main = new JPanel(new GridLayout(2, 1, 4, 4));
+        super("Fragmentation", Icons.Kind.BLOCKS, "Memory",
+                "Place processes into memory blocks and see where space is wasted. Fixed partitions hold one process per "
+                + "block and show internal fragmentation (unused space inside a block). Dynamic partitions split blocks "
+                + "and expose external fragmentation (enough free memory in total, but no single hole large enough).");
+        JPanel main = Ui.clear(new GridLayout(2, 1, 0, 12));
         main.add(blocks);
         main.add(processes);
-        arrange(main,
-                Ui.labeled("Placement strategy:", strategy),
-                Ui.labeled("Partitioning:", mode),
-                Ui.flow(action("Load Sample", this::loadSample), action("Load Large (200 / 500)", this::loadLarge),
-                        action("Run", this::run)));
+        arrange(main, Ui.row(Ui.form("Placement strategy", strategy), Ui.form("Partitioning", mode)));
+        actions(this::loadSample, "Load Large (200 / 500)", this::loadLarge, this::run);
         loadSample();
     }
 
@@ -80,9 +78,20 @@ final class FragmentationPanel extends ModulePanel {
         Mode chosenMode = (Mode) mode.getSelectedItem();
         Result result = Fragmentation.run(selected, chosenMode, sizes, requests);
 
+        long placed = result.allocations().stream().filter(a -> a.block() >= 0).count();
         output.reset();
+        output.addStat("Placed", placed + " / " + result.allocations().size(),
+                placed == result.allocations().size() ? Theme.Tone.SUCCESS : Theme.Tone.WARNING, "processes");
+        output.addStat("Internal frag.", Ui.grouped(result.internalFragmentation()),
+                result.internalFragmentation() > 0 ? Theme.Tone.WARNING : Theme.Tone.NEUTRAL, "wasted in blocks");
+        output.addStat("Free memory", Ui.grouped(result.totalFree()), Theme.Tone.NEUTRAL,
+                "largest hole " + Ui.grouped(result.largestHole()));
+        output.addStat("External frag.", result.externalFailures() > 0 ? "YES" : "No",
+                result.externalFailures() > 0 ? Theme.Tone.DANGER : Theme.Tone.SUCCESS,
+                result.externalFailures() + " failure(s)");
+        output.addComponent("Memory Map", new MemoryMap(result));
         output.addTable("Allocation", new String[]{"Process", "Size", "Block", "Internal Frag.", "Status"}, allocationRows(result));
-        output.addTable("Memory Map", new String[]{"Block", "Size", "Processes", "Used", "Free / Wasted"}, mapRows(result));
+        output.addTable("Blocks", new String[]{"Block", "Size", "Processes", "Used", "Free / Wasted"}, mapRows(result));
         output.addTable("Strategy Comparison", new String[]{"Strategy", "Placed", "Not placed", "Internal", "Total free",
                 "Largest hole", "External failures"}, comparisonRows(sizes, requests, chosenMode));
         output.setSummary(summary(result));

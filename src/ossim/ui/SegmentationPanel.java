@@ -13,18 +13,20 @@ import java.util.Random;
 final class SegmentationPanel extends ModulePanel {
     private static final String[] COLUMNS = {"Segment", "Offset", "Base", "Limit", "Physical", "Status"};
 
-    private final InputTable segments = new InputTable("Segment Table", "Segment", "Base", "Limit");
-    private final InputTable addresses = new InputTable("Logical addresses (segment, offset)", "Segment", "Offset");
+    private final InputTable segments = table(new InputTable("Segment table", "Segment", "Base", "Limit"), "Segment row ");
+    private final InputTable addresses = table(new InputTable("Logical addresses (segment, offset)", "Segment", "Offset"),
+            "Address row ");
 
     SegmentationPanel() {
-        super("<b>Segmentation</b> - define any number of segments with a base address and a limit, then list logical addresses "
-                + "as (segment, offset). A translation is valid only when the segment exists and offset &lt; limit; "
-                + "otherwise an addressing error is reported. Physical = base + offset.");
-        JPanel main = new JPanel(new GridLayout(2, 1, 4, 4));
+        super("Segmentation", Icons.Kind.LAYERS, "Memory",
+                "Divide a program into variable-size segments, each with a base address and a limit. List logical "
+                + "addresses as (segment, offset): a translation is valid only when the segment exists and offset < limit, "
+                + "then physical = base + offset. Anything else raises an addressing trap.");
+        JPanel main = Ui.clear(new GridLayout(2, 1, 0, 12));
         main.add(segments);
         main.add(addresses);
-        arrange(main, Ui.flow(action("Load Sample", this::loadSample),
-                action("Load Large (500 segments)", this::loadLarge), action("Run", this::run)));
+        arrange(main);
+        actions(this::loadSample, "Load Large (500 segments)", this::loadLarge, this::run);
         loadSample();
     }
 
@@ -80,7 +82,13 @@ final class SegmentationPanel extends ModulePanel {
         }
         List<String> warnings = Segmentation.overlapWarnings(table);
         output.reset();
+        output.addStat("Segments", Ui.grouped(table.size()), Theme.Tone.NEUTRAL, warnings.isEmpty() ? "no overlap" : warnings.size() + " overlap(s)");
+        output.addStat("Addresses", Ui.grouped(result.size()), Theme.Tone.NEUTRAL, "(seg, offset) pairs");
+        output.addStat("Valid", Ui.grouped(valid), Theme.Tone.SUCCESS, "translated");
+        output.addStat("Traps", Ui.grouped(result.size() - valid), result.size() > valid ? Theme.Tone.DANGER : Theme.Tone.NEUTRAL,
+                "addressing errors");
         output.addTable("Address Translation", COLUMNS, rows);
+        output.addComponent("Memory Layout", new SegmentMap(table, result));
         output.setSummary("Segments: " + table.size() + "   Addresses: " + result.size()
                 + "   Valid: " + valid + "   Errors: " + (result.size() - valid) + "\n"
                 + "Rule: valid if the segment exists and 0 <= offset < limit; physical = base + offset.\n"

@@ -2,19 +2,19 @@ package ossim.ui;
 
 import javax.swing.AbstractButton;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.HeadlessException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
 /**
  * Drives each real panel through its buttons without a display.
- * Valid input must run silently; invalid input must reach the error dialog (HeadlessException here)
- * instead of crashing with any other exception.
+ * Valid input must run without any error message and must produce results; invalid input must produce an inline
+ * validation message (never an unexpected exception), and the faulty field must be flagged when one is named.
  */
 public final class GuiSmokeTest {
     private static int failures;
@@ -40,7 +40,9 @@ public final class GuiSmokeTest {
             for (String label : clicks) {
                 click(panel, label);
             }
-            report(true, name + " valid [" + String.join(" > ", clicks) + "] " + (System.nanoTime() - start) / 1_000_000 + " ms");
+            boolean ok = panel.lastError() == null && panel.output.hasResults();
+            report(ok, name + " valid [" + String.join(" > ", clicks) + "] " + (System.nanoTime() - start) / 1_000_000 + " ms"
+                    + (ok ? "" : " -> unexpected message: " + panel.lastError()));
         } catch (RuntimeException e) {
             report(false, name + " valid [" + String.join(" > ", clicks) + "] threw " + e);
         }
@@ -59,9 +61,18 @@ public final class GuiSmokeTest {
         }
         try {
             click(panel, panel instanceof BankerPanel ? "Build Tables" : "Run");
-            report(false, name + " invalid input was silently accepted");
-        } catch (HeadlessException expectedDialog) {
-            report(true, name + " invalid input -> validation dialog (no crash)");
+            if (panel.lastError() == null) {
+                report(false, name + " invalid input was silently accepted");
+            } else if (panel.unexpectedError()) {
+                report(false, name + " invalid input caused an unexpected error: " + panel.lastError());
+            } else {
+                boolean flagged = false;
+                for (Component c : all(panel)) {
+                    flagged |= c instanceof JComponent jc && Boolean.TRUE.equals(jc.getClientProperty(Ui.ERROR_KEY));
+                }
+                report(true, name + " invalid input -> inline message" + (flagged ? " + field outlined" : "")
+                        + ": \"" + panel.lastError() + "\"");
+            }
         } catch (RuntimeException e) {
             report(false, name + " invalid input crashed with " + e);
         }

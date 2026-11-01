@@ -1,0 +1,26 @@
+PASS  CpuPanel valid [Run] 105 ms
+PASS  CpuPanel valid [Load Large > Run] 350 ms
+PASS  CpuPanel invalid input -> inline message + field outlined: "Time quantum: 'abc' is not a valid whole number."
+PASS  BankerPanel valid [Run] 80 ms
+PASS  BankerPanel valid [Load Large > Run] 158 ms
+PASS  BankerPanel invalid input -> inline message + field outlined: "Number of processes: 'abc' is not a valid whole number."
+PASS  PagingPanel valid [Run] 87 ms
+PASS  PagingPanel valid [Load Large > Run] 203 ms
+PASS  PagingPanel invalid input -> inline message + field outlined: "Page size: 'abc' is not a valid whole number."
+PASS  PageReplacementPanel valid [Run] 81 ms
+PASS  PageReplacementPanel valid [Load Large > Run] 318 ms
+PASS  PageReplacementPanel invalid input -> inline message + field outlined: "Reference string is blank."
+PASS  SegmentationPanel valid [Run] 79 ms
+PASS  SegmentationPanel valid [Load Large > Run] 168 ms
+PASS  SegmentationPanel invalid input -> inline message: "Define at least one segment."
+PASS  FragmentationPanel valid [Run] 84 ms
+PASS  FragmentationPanel valid [Load Large > Run] 158 ms
+PASS  FragmentationPanel invalid input -> inline message: "Enter at least one memory block and one process."
+PASS  DiskPanel valid [Run] 81 ms
+PASS  DiskPanel valid [Load Large > Run] 1445 ms
+PASS  DiskPanel invalid input -> inline message + field outlined: "Highest cylinder: 'abc' is not a valid whole number."
+PASS  MultiprogrammingPanel valid [Run] 85 ms
+PASS  MultiprogrammingPanel valid [Load Large > Run] 183 ms
+PASS  MultiprogrammingPanel invalid input -> inline message + field outlined: "Total memory: 'abc' is not a valid whole number."
+
+GUI smoke test: ALL OK

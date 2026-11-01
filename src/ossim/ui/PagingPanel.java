@@ -4,11 +4,9 @@ import ossim.core.Paging;
 import ossim.util.InputException;
 import ossim.util.Parse;
 
-import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,25 +16,21 @@ import java.util.Random;
 final class PagingPanel extends ModulePanel {
     private static final String[] COLUMNS = {"Logical", "Page (p)", "Offset (d)", "Frame", "Physical", "Calculation", "Status"};
 
-    private final JTextField pageSize = new JTextField("1024", 6);
-    private final JTextField frames = new JTextField("8", 6);
-    private final InputTable pageTable = new InputTable("Page Table (page -> frame)", "Page", "Frame");
+    private final JTextField pageSize = field("Page size", "1024", 6);
+    private final JTextField frames = field("Number of frames", "8", 6);
+    private final InputTable pageTable = table(new InputTable("Page table (page → frame)", "Page", "Frame"), "Page table row ");
     private final JTextArea addresses = Ui.textArea(4, "");
 
     PagingPanel() {
-        super("<b>Paging</b> - define the page size, the number of physical frames and the page table. Logical addresses "
-                + "(any number, separated by commas or spaces) are split into page number and offset and translated: "
-                + "physical = frame x page size + offset. Unmapped pages are reported as page faults.");
-        JPanel addressBox = new JPanel(new BorderLayout());
-        addressBox.setBorder(BorderFactory.createTitledBorder("Logical addresses"));
-        addressBox.add(Ui.scroll(addresses), BorderLayout.CENTER);
-        JPanel main = new JPanel(new java.awt.GridLayout(2, 1, 4, 4));
+        super("Paging", Icons.Kind.GRID, "Memory",
+                "Map fixed-size logical pages onto physical frames. Define the page size, the number of frames and the "
+                + "page table, then list logical addresses. Each address is split into page and offset and translated as "
+                + "physical = frame × page size + offset; an unmapped page is reported as a page fault.");
+        JPanel main = Ui.clear(new java.awt.GridLayout(2, 1, 0, 12));
         main.add(pageTable);
-        main.add(addressBox);
-        arrange(main,
-                Ui.flow(new javax.swing.JLabel("Page size:"), pageSize, new javax.swing.JLabel("Physical frames:"), frames),
-                Ui.flow(action("Load Sample", this::loadSample), action("Load Large (1000 pages)", this::loadLarge),
-                        action("Run", this::run)));
+        main.add(listInput("Logical addresses", "Any count, separated by commas or spaces", addresses, "Logical address"));
+        arrange(main, Ui.row(Ui.form("Page size (bytes)", pageSize), Ui.form("Physical frames", frames)));
+        actions(this::loadSample, "Load Large (1000 pages)", this::loadLarge, this::run);
         loadSample();
     }
 
@@ -88,13 +82,24 @@ final class PagingPanel extends ModulePanel {
 
         List<Object[]> table = new ArrayList<>();
         long faults = 0;
+        List<Long> faultPages = new ArrayList<>();
         for (Paging.Translation t : result) {
             faults += t.physical() == null ? 1 : 0;
+            if (t.physical() == null) {
+                faultPages.add(t.page());
+            }
             table.add(new Object[]{t.logical(), t.page(), t.offset(), t.frame() == null ? "-" : t.frame(),
                     t.physical() == null ? "-" : t.physical(), t.calculation(), t.status()});
         }
         output.reset();
+        output.addStat("Addresses", Ui.grouped(result.size()), Theme.Tone.NEUTRAL, "logical references");
+        output.addStat("Translated", Ui.grouped(result.size() - faults), Theme.Tone.SUCCESS, "valid mappings");
+        output.addStat("Page faults", Ui.grouped(faults), faults > 0 ? Theme.Tone.DANGER : Theme.Tone.NEUTRAL,
+                "page not in table");
+        output.addStat("Physical memory", Ui.grouped((long) size * frameCount), Theme.Tone.ACCENT,
+                frameCount + " frames × " + size);
         output.addTable("Address Translation", COLUMNS, table);
+        output.addComponent("Page → Frame Map", new PageMap(entries, frameCount, size, faultPages));
         output.setSummary("Page size: " + size + "   Frames: " + frameCount + "   Physical memory: " + (long) size * frameCount + "\n"
                 + "Page table entries: " + entries.size() + "\n"
                 + "Addresses: " + result.size() + "   Translated: " + (result.size() - faults) + "   Page faults: " + faults + "\n"
