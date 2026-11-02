@@ -284,7 +284,7 @@ final class Ui {
     }
 
     static JPanel flow(Component... parts) {
-        JPanel panel = clear(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        JPanel panel = clear(new WrapLayout(FlowLayout.LEFT, 8, 4));
         for (Component part : parts) {
             panel.add(part);
         }
@@ -301,7 +301,7 @@ final class Ui {
 
     /** One row of form controls laid out left to right. */
     static JPanel row(Component... parts) {
-        JPanel panel = clear(new FlowLayout(FlowLayout.LEFT, 12, 6));
+        JPanel panel = clear(new WrapLayout(FlowLayout.LEFT, 12, 6));
         for (Component part : parts) {
             panel.add(part);
         }

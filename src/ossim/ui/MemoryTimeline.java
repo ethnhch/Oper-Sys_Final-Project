@@ -36,7 +36,7 @@ final class MemoryTimeline extends Chart {
     private static int timelineWidth(Multiprogramming.Result r) {
         List<Multiprogramming.Snapshot> t = r.timeline();
         long span = t.isEmpty() ? 1 : t.get(t.size() - 1).end() - t.get(0).start();
-        return (int) Math.min(40_000L, Math.max(560L, span * 8L));
+        return (int) Math.min(40_000L, Math.max(420L, span * 8L));
     }
 
     @Override

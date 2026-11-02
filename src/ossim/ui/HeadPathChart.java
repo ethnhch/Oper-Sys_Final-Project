@@ -24,7 +24,7 @@ final class HeadPathChart extends Chart {
     private final int maxCylinder;
 
     HeadPathChart(int head, List<DiskScheduler.Move> moves, int maxCylinder) {
-        super(560, (int) Math.min(40_000L, TOP + 50L + Math.max(1, moves.size()) * (moves.size() <= LABEL_LIMIT ? 30L : 12L)));
+        super(420, (int) Math.min(40_000L, TOP + 50L + Math.max(1, moves.size()) * (moves.size() <= LABEL_LIMIT ? 30L : 12L)));
         this.head = head;
         this.moves = moves;
         this.maxCylinder = maxCylinder;

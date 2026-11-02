@@ -51,6 +51,21 @@ abstract class ModulePanel extends JPanel {
     private String lastError;
     private boolean unexpected;
 
+    /** Content width below which input and results are shown as "Input | Results" tabs instead of side by side. */
+    static final int STACK_BELOW = 960;
+    /** Window height below which the module description is hidden to give the work area more room. */
+    static final int SHORT_BELOW = 680;
+
+    private final JPanel centerHost = Ui.clear(new BorderLayout());
+    private final java.awt.CardLayout stackCards = new java.awt.CardLayout();
+    private final JPanel stackBody = Ui.clear(stackCards);
+    private final Segmented segments = new Segmented(java.util.List.of("Input", "Results"), this::showPane);
+    private final JPanel stack = Ui.clear(new BorderLayout(0, Theme.GAP));
+    private JTextArea descriptionArea;
+    private Ui.Card inputCard;
+    private JSplitPane split;
+    private boolean stacked;
+
     protected ModulePanel(String title, Icons.Kind icon, String category, String description) {
         super(new BorderLayout(0, Theme.GAP));
         this.title = title;
@@ -67,13 +82,17 @@ abstract class ModulePanel extends JPanel {
         titleRow.add(javax.swing.Box.createHorizontalStrut(12));
         titleRow.add(new Ui.Badge(category, Theme.Tone.ACCENT));
         titles.add(titleRow, BorderLayout.NORTH);
-        titles.add(wrapping(description), BorderLayout.CENTER);
+        descriptionArea = wrapping(description);
+        titles.add(descriptionArea, BorderLayout.CENTER);
         header.add(titles, BorderLayout.CENTER);
 
         JPanel north = Ui.clear(new BorderLayout(0, 10));
         north.add(header, BorderLayout.NORTH);
         north.add(banner, BorderLayout.SOUTH);
         add(north, BorderLayout.NORTH);
+        stack.add(segments, BorderLayout.NORTH);
+        stack.add(stackBody, BorderLayout.CENTER);
+        add(centerHost, BorderLayout.CENTER);
     }
 
     /** Multi-line muted text that wraps to the available width. */
@@ -123,11 +142,68 @@ abstract class ModulePanel extends JPanel {
         input.add(bar, BorderLayout.SOUTH);
         input.setMinimumSize(new Dimension(380, 300));
 
-        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, input, output);
+        inputCard = input;
+        split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         split.setResizeWeight(0.36);
         split.setOpaque(false);
         split.setContinuousLayout(true);
-        add(split, BorderLayout.CENTER);
+        applyStacked(false, true);
+    }
+
+    // ------------------------------------------------------------------ responsive layout
+
+    /**
+     * Called by the main window whenever the space for this screen changes. Wide: inputs and results side by side.
+     * Narrow: a segmented "Input | Results" switch shows one at a time. Short: the description is hidden and the
+     * page margins shrink.
+     */
+    void adapt(int width, int height) {
+        boolean compactSpacing = width < STACK_BELOW || height < SHORT_BELOW;
+        int v = compactSpacing ? 12 : 20;
+        int h = compactSpacing ? 14 : 24;
+        setBorder(BorderFactory.createEmptyBorder(v, h, v, h));
+        if (descriptionArea != null) {
+            descriptionArea.setVisible(height >= SHORT_BELOW);
+        }
+        if (split != null) {
+            applyStacked(width < STACK_BELOW, false);
+            output.adapt(stacked ? width - 2 * h : (int) ((width - 2 * h) * 0.62));
+        }
+    }
+
+    private void applyStacked(boolean value, boolean force) {
+        if (value == stacked && !force) {
+            return;
+        }
+        stacked = value;
+        centerHost.removeAll();
+        if (stacked) {
+            stackBody.add(inputCard, "0");
+            stackBody.add(output, "1");
+            centerHost.add(stack, BorderLayout.CENTER);
+            showPane(segments.selected());
+        } else {
+            split.setLeftComponent(inputCard);
+            split.setRightComponent(output);
+            centerHost.add(split, BorderLayout.CENTER);
+        }
+        centerHost.revalidate();
+        centerHost.repaint();
+    }
+
+    private void showPane(int index) {
+        segments.select(index);
+        stackCards.show(stackBody, String.valueOf(index));
+    }
+
+    /** True when the narrow "Input | Results" layout is active (used by the GUI tests). */
+    boolean isStacked() {
+        return stacked;
+    }
+
+    /** Index of the visible pane in the narrow layout: 0 = Input, 1 = Results. */
+    int visiblePane() {
+        return segments.selected();
     }
 
     /** Fills the sticky action bar: secondary sample buttons on the left, the primary Run button on the right. */
@@ -146,7 +222,10 @@ abstract class ModulePanel extends JPanel {
         largeButton.setToolTipText("Hundreds to thousands of random items");
         runButton = Ui.button("Run", Icons.Kind.PLAY, Ui.Variant.PRIMARY, () -> guarded(run, true));
         runButton.setToolTipText("Run the simulation (Ctrl+Enter)");
-        actionBar.add(Ui.flow(sampleButton, largeButton), BorderLayout.WEST);
+        JPanel samples = Ui.clear(new WrapLayout(java.awt.FlowLayout.LEFT, 8, 4));
+        samples.add(sampleButton);
+        samples.add(largeButton);
+        actionBar.add(samples, BorderLayout.CENTER);
         JPanel right = Ui.clear(new FlowLayout(FlowLayout.RIGHT, 0, 4));
         right.add(runButton);
         actionBar.add(right, BorderLayout.EAST);
@@ -226,11 +305,17 @@ abstract class ModulePanel extends JPanel {
             if (isRun) {
                 long ms = (System.nanoTime() - start) / 1_000_000;
                 banner.success("Done in " + ms + " ms. Results, charts and the comparison are updated.");
+                if (stacked) {
+                    showPane(1);
+                }
             }
         } catch (InputException ex) {
             lastError = ex.getMessage();
             unexpected = false;
             banner.error("Please fix the input", ex.getMessage());
+            if (stacked) {
+                showPane(0);
+            }
             flag(ex.getMessage());
         } catch (RuntimeException ex) {
             lastError = String.valueOf(ex);

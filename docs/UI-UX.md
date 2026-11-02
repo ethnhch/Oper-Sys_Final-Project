@@ -11,7 +11,7 @@ This document describes the interface of the Mini Operating System Simulator: wh
 | Rubric criterion | How the design answers it |
 |---|---|
 | **Interface design** (clear, organised, consistent) | One page template for all 8 modules: header → input card → stat tiles → result tabs → explanation. Same spacing, colours and type everywhere. |
-| **Navigation and controls** | A permanent sidebar grouped by OS area (Processes / Memory / Storage / System), a home overview with one card per module, and keyboard shortcuts (`Ctrl+1…8`, `Ctrl+0`, `Ctrl+Enter`, `Ctrl+D`). |
+| **Navigation and controls** | A responsive sidebar (full or icon rail) grouped by OS area (Processes / Memory / Storage / System), a home overview with one card per module, and keyboard shortcuts (`Ctrl+1…8`, `Ctrl+0`, `Ctrl+Enter`, `Ctrl+D`). |
 | **Output presentation** | Key numbers first (stat tiles), then a dedicated visual per module (Gantt, frame diagram, memory map…), then sortable tables, a comparison bar chart and a plain-language "How it was calculated" panel. |
 | **Error handling** | No modal pop-ups. An inline red banner names the problem, and the faulty **field is outlined in red** or the faulty **table row is highlighted** and scrolled into view. Typing clears the highlight. |
 | **Dynamic input flexibility** | Every input table shows a live **row count**; every list box shows a live **value count**. Each module has *Load Large*, and the input card states "Unlimited rows". |
@@ -41,6 +41,30 @@ This document describes the interface of the Mini Operating System Simulator: wh
 * **Left to right = input to output.** The eye follows the same path as the algorithm.
 * **Action bar stays at the bottom of the input card.** *Run* is the only primary (filled blue) button on the screen, so the next step is always obvious.
 * **Both split panes can be resized** (input/results and chart/explanation).
+
+---
+
+## 2a. Responsive layout
+
+The window can be resized from full HD down to **720 × 540**, and the layout adapts at each size instead of clipping or squeezing. `MainFrame.adaptLayout()` re-evaluates the layout on every resize and tells the overview and each module screen how much room it has.
+
+| Window | Sidebar | Module screen | Overview |
+|---|---|---|---|
+| **Wide** (≥ 1180 px) | full sidebar with labels | inputs and results **side by side** (resizable split), 4 stat tiles in a row | 2 columns of module cards, steps in a row |
+| **Medium** (< 1180 px) | **icon rail** (68 px); labels move into tooltips | still side by side; stat tiles reflow to **2 × 2** when the results pane is narrow | 1 column of module cards when the content is < 1000 px |
+| **Narrow** (content < 960 px) | icon rail | a segmented **Input \| Results** switch shows one pane at a time; **Run jumps to Results** and a validation error jumps back to Input | quick-start steps and guide stack vertically |
+| **Short** (height < 680 px) | menu scrolls; shortcut footnote hidden | module description hidden, tighter page margins | – |
+
+Other details:
+
+* **Clicking the logo** collapses or expands the sidebar by hand. The automatic choice comes back the next time the window crosses the 1180 px breakpoint.
+* **Option rows and button bars wrap** (`WrapLayout`) instead of being cut off, e.g. *Load Sample / Load Large* move onto two lines in a slim input card.
+* **Charts fill the available width** and only scroll when the data really needs more room (thousands of slices, references or requests).
+* `GuiSmokeTest` checks every module at a narrow size: the screen must switch to the stacked layout, Run must show Results, and widening the window must restore the split.
+
+| Medium: icon rail, 2 × 2 tiles | Narrow: Results tab | Narrow: Input tab |
+|---|---|---|
+| ![Medium](screenshots/responsive-medium.png) | ![Narrow results](screenshots/responsive-narrow-results.png) | ![Narrow input](screenshots/responsive-narrow-input.png) |
 
 ---
 
@@ -153,8 +177,9 @@ Large inputs stay usable. Charts scroll sideways or downward, labels are dropped
 ## 9. Code map (`src/ossim/ui`)
 
 ```
-Theme, FlatUI, Icons, Ui, Tables      design system (tokens, Swing delegates, icons, widgets, table styling)
-MainFrame, Sidebar, HomePanel         app shell, navigation, overview
+Theme, FlatUI, Icons, Ui, Tables,
+WrapLayout, Segmented                 design system (tokens, Swing delegates, icons, widgets, table styling)
+MainFrame, Sidebar, HomePanel         app shell, responsive navigation, overview
 ModulePanel, OutputPane               page template, validation banner, stat tiles, result tabs
 InputTable, MatrixTable               dynamic input editors
 Chart (base) + GanttChart, HeadPathChart, BarChart, FrameGrid, MemoryMap,

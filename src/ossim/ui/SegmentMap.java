@@ -29,7 +29,7 @@ final class SegmentMap extends Chart {
     private final long end;
 
     SegmentMap(List<Segmentation.Segment> segments, List<Segmentation.Translation> translations) {
-        super(Math.max(560, Math.min(segments.size(), 400) * 26), 0);
+        super(Math.max(420, Math.min(segments.size(), 400) * 26), 0);
         this.segments = new ArrayList<>(segments);
         this.segments.sort(Comparator.comparingInt(Segmentation.Segment::base));
         this.translations = translations;

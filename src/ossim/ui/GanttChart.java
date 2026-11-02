@@ -27,7 +27,7 @@ final class GanttChart extends Chart {
     private final int end;
 
     GanttChart(List<CpuScheduler.Slice> slices) {
-        super((int) Math.min(60_000L, Math.max(480L, (slices.get(slices.size() - 1).end() - slices.get(0).start()) * 8L)), 190);
+        super((int) Math.min(60_000L, Math.max(360L, (slices.get(slices.size() - 1).end() - slices.get(0).start()) * 8L)), 190);
         this.slices = slices;
         origin = slices.get(0).start();
         end = slices.get(slices.size() - 1).end();

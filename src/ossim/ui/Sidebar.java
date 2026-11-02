@@ -7,6 +7,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
@@ -21,9 +22,12 @@ import java.util.function.IntConsumer;
 /**
  * The main menu: brand, a Home entry, the eight modules grouped by OS area, and the theme switch.
  * The sidebar stays dark in both themes so the navigation reads as a separate layer from the work area.
+ * On narrow windows it collapses to an icon rail (labels move into tooltips); clicking the logo toggles it by hand.
+ * The menu scrolls when the window is too short to show every entry.
  */
 final class Sidebar extends JPanel {
     static final int WIDTH = 248;
+    static final int RAIL = 68;
     private static final Color TEXT = new Color(0xC9D1DC);
     private static final Color TEXT_DIM = new Color(0x7D8899);
     private static final Color TEXT_ON = Color.WHITE;
@@ -31,11 +35,13 @@ final class Sidebar extends JPanel {
     private final List<NavItem> items = new ArrayList<>();
     private final IntConsumer onSelect;
     private final NavItem themeItem;
+    private final Footnote footnote = new Footnote();
+    private boolean compact;
 
     /** One navigation entry: index -1 = home, 0..7 = modules. */
     record Entry(int index, String label, Icons.Kind icon, String group, String shortcut) { }
 
-    Sidebar(List<Entry> entries, IntConsumer onSelect, Runnable onToggleTheme) {
+    Sidebar(List<Entry> entries, IntConsumer onSelect, Runnable onToggleTheme, Runnable onToggleCompact) {
         super(new BorderLayout());
         this.onSelect = onSelect;
         setPreferredSize(new Dimension(WIDTH, 600));
@@ -43,7 +49,7 @@ final class Sidebar extends JPanel {
 
         JPanel list = Ui.clear(null);
         list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
-        list.add(new Brand());
+        list.add(new Brand(onToggleCompact));
         list.add(Box.createVerticalStrut(18));
         String group = null;
         for (Entry e : entries) {
@@ -57,15 +63,45 @@ final class Sidebar extends JPanel {
             items.add(item);
             list.add(item);
         }
-        add(list, BorderLayout.NORTH);
+        JPanel listTop = Ui.clear(new BorderLayout());
+        listTop.add(list, BorderLayout.NORTH);
+        var scroll = Ui.scroll(listTop);
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
+        scroll.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        add(scroll, BorderLayout.CENTER);
 
         JPanel bottom = Ui.clear(null);
         bottom.setLayout(new BoxLayout(bottom, BoxLayout.Y_AXIS));
         themeItem = new NavItem("Dark mode", Icons.Kind.MOON, "Ctrl+D", onToggleTheme);
         bottom.add(themeItem);
         bottom.add(Box.createVerticalStrut(8));
-        bottom.add(new Footnote());
+        bottom.add(footnote);
         add(bottom, BorderLayout.SOUTH);
+    }
+
+    /** Switches between the full sidebar and the icon rail. */
+    void setCompact(boolean value) {
+        compact = value;
+        setPreferredSize(new Dimension(compact ? RAIL : WIDTH, 600));
+        setBorder(BorderFactory.createEmptyBorder(18, compact ? 10 : 12, 14, compact ? 10 : 12));
+        footnote.setVisible(!compact);
+        revalidate();
+        repaint();
+    }
+
+    boolean isCompact() {
+        return compact;
+    }
+
+    /** Hides the shortcut footnote when the window is short, so the menu itself keeps the space. */
+    void adaptHeight(int height) {
+        footnote.setVisible(!compact && height >= 760);
+    }
+
+    private static boolean compact(Component c) {
+        Sidebar s = (Sidebar) javax.swing.SwingUtilities.getAncestorOfClass(Sidebar.class, c);
+        return s != null && s.compact;
     }
 
     void select(int index) {
@@ -103,7 +139,7 @@ final class Sidebar extends JPanel {
             this.kind = kind;
             this.shortcut = shortcut;
             setAlignmentX(LEFT_ALIGNMENT);
-            setPreferredSize(new Dimension(WIDTH - 24, 40));
+            setPreferredSize(new Dimension(40, 40));
             setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             setToolTipText(label + (shortcut == null ? "" : "  (" + shortcut + ")"));
@@ -139,7 +175,13 @@ final class Sidebar extends JPanel {
                 g2.fillRoundRect(0, 10, 3, getHeight() - 20, 3, 3);
             }
             Color fg = active ? TEXT_ON : hover ? TEXT_ON : TEXT;
-            Icons.paint(g2, kind, 12, (getHeight() - 18) / 2, 18, active ? Theme.c(Theme.Role.ACCENT_HOVER) : fg);
+            boolean rail = compact(this);
+            int iconX = rail ? (getWidth() - 18) / 2 : 12;
+            Icons.paint(g2, kind, iconX, (getHeight() - 18) / 2, 18, active ? Theme.c(Theme.Role.ACCENT_HOVER) : fg);
+            if (rail) {
+                g2.dispose();
+                return;
+            }
             g2.setFont(active ? Theme.BODY_BOLD : Theme.BODY);
             g2.setColor(fg);
             FontMetrics fm = g2.getFontMetrics();
@@ -161,33 +203,59 @@ final class Sidebar extends JPanel {
         GroupCaption(String text) {
             this.text = text.toUpperCase();
             setAlignmentX(LEFT_ALIGNMENT);
-            setPreferredSize(new Dimension(WIDTH - 24, 26));
-            setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            return new Dimension(40, compact(this) ? 10 : 26);
+        }
+
+        @Override
+        public Dimension getMaximumSize() {
+            return new Dimension(Integer.MAX_VALUE, compact(this) ? 10 : 26);
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = FlatUI.smooth(g);
-            g2.setFont(Theme.SMALL_BOLD);
-            g2.setColor(TEXT_DIM);
-            g2.drawString(text, 12, 18);
+            if (compact(this)) {
+                g2.setColor(new Color(0x2A3444));
+                g2.fillRect(10, 5, getWidth() - 20, 1);
+            } else {
+                g2.setFont(Theme.SMALL_BOLD);
+                g2.setColor(TEXT_DIM);
+                g2.drawString(text, 12, 18);
+            }
             g2.dispose();
         }
     }
 
     private static final class Brand extends JComponent {
-        Brand() {
+        Brand(Runnable onToggle) {
             setAlignmentX(LEFT_ALIGNMENT);
-            setPreferredSize(new Dimension(WIDTH - 24, 44));
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            setToolTipText("Collapse or expand the menu");
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    onToggle.run();
+                }
+            });
+            setPreferredSize(new Dimension(40, 44));
             setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = FlatUI.smooth(g);
-            g2.setPaint(new java.awt.GradientPaint(8, 4, new Color(0x3B82F6), 44, 40, new Color(0x8B5CF6)));
-            g2.fillRoundRect(8, 4, 36, 36, 11, 11);
-            Icons.paint(g2, Icons.Kind.CPU, 16, 12, 20, Color.WHITE);
+            int x = compact(this) ? (getWidth() - 36) / 2 : 8;
+            g2.setPaint(new java.awt.GradientPaint(x, 4, new Color(0x3B82F6), x + 36, 40, new Color(0x8B5CF6)));
+            g2.fillRoundRect(x, 4, 36, 36, 11, 11);
+            Icons.paint(g2, Icons.Kind.CPU, x + 8, 12, 20, Color.WHITE);
+            if (compact(this)) {
+                g2.dispose();
+                return;
+            }
             g2.setFont(Theme.H2.deriveFont(16f));
             g2.setColor(TEXT_ON);
             g2.drawString("MiniOS", 54, 20);
@@ -201,7 +269,7 @@ final class Sidebar extends JPanel {
     private static final class Footnote extends JComponent {
         Footnote() {
             setAlignmentX(LEFT_ALIGNMENT);
-            setPreferredSize(new Dimension(WIDTH - 24, 36));
+            setPreferredSize(new Dimension(40, 36));
             setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         }
 

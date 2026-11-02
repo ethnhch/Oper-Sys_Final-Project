@@ -26,7 +26,7 @@ final class PageMap extends Chart {
     private final int pageSize;
 
     PageMap(List<Paging.Entry> entries, int frames, int pageSize, List<Long> faultPages) {
-        super(560, TOP + Math.max(Math.min(rows(entries, faultPages), LIMIT), Math.min(frames, LIMIT)) * ROW + 70);
+        super(460, TOP + Math.max(Math.min(rows(entries, faultPages), LIMIT), Math.min(frames, LIMIT)) * ROW + 70);
         this.entries = entries;
         this.frames = frames;
         this.pageSize = pageSize;

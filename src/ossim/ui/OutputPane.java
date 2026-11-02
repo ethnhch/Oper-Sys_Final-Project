@@ -26,7 +26,7 @@ final class OutputPane extends JPanel {
     private static final String EMPTY = "empty";
     private static final String RESULTS = "results";
 
-    private final JPanel stats = Ui.clear(new GridLayout(1, 0, Theme.GAP, 0));
+    private final JPanel stats = Ui.clear(new GridLayout(0, 4, Theme.GAP, Theme.GAP));
     private final JTabbedPane tabs = new JTabbedPane();
     private final JTextArea summary = new JTextArea(6, 40);
     private final CardLayout cards = new CardLayout();
@@ -87,6 +87,16 @@ final class OutputPane extends JPanel {
         center.add(inner);
         card.add(center, BorderLayout.CENTER);
         return card;
+    }
+
+    /** Reflows the stat tiles: 4 in a row when wide, 2 × 2 when medium, stacked when very narrow. */
+    void adapt(int width) {
+        int columns = width >= 680 ? 4 : width >= 380 ? 2 : 1;
+        GridLayout layout = (GridLayout) stats.getLayout();
+        if (layout.getColumns() != columns) {
+            stats.setLayout(new GridLayout(0, columns, Theme.GAP, Theme.GAP));
+            stats.revalidate();
+        }
     }
 
     void reset() {

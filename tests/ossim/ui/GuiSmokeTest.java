@@ -29,6 +29,7 @@ public final class GuiSmokeTest {
             validRun(name, factory.get(), "Run");
             validRun(name, factory.get(), "Load Large", "Run");
             invalidRun(name, factory.get());
+            narrowRun(name, factory.get());
         }
         System.out.println(failures == 0 ? "\nGUI smoke test: ALL OK" : "\nGUI smoke test: " + failures + " FAILURE(S)");
         System.exit(failures == 0 ? 0 : 1);
@@ -45,6 +46,21 @@ public final class GuiSmokeTest {
                     + (ok ? "" : " -> unexpected message: " + panel.lastError()));
         } catch (RuntimeException e) {
             report(false, name + " valid [" + String.join(" > ", clicks) + "] threw " + e);
+        }
+    }
+
+    /** Narrow window: the screen must switch to "Input | Results" tabs and jump to Results after a run. */
+    private static void narrowRun(String name, ModulePanel panel) {
+        try {
+            panel.adapt(700, 600);
+            boolean stacked = panel.isStacked();
+            click(panel, "Run");
+            boolean ok = stacked && panel.lastError() == null && panel.visiblePane() == 1 && panel.output.hasResults();
+            panel.adapt(1300, 900);
+            ok &= !panel.isStacked();
+            report(ok, name + " responsive: narrow layout stacks, Run shows Results, wide layout restores split");
+        } catch (RuntimeException e) {
+            report(false, name + " responsive layout threw " + e);
         }
     }
 

@@ -18,7 +18,7 @@ final class SequenceStrip extends Chart {
     private final String headline;
 
     SequenceStrip(boolean safe, List<Integer> sequence, List<Integer> blocked, String headline) {
-        super(480, 160 + (Math.max(sequence.size(), blocked.size()) / 12) * (CHIP_H + 14));
+        super(380, 160 + (Math.max(sequence.size(), blocked.size()) / 12) * (CHIP_H + 14));
         this.safe = safe;
         this.sequence = sequence;
         this.blocked = blocked;

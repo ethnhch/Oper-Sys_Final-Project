@@ -22,7 +22,7 @@ final class BarChart extends Chart {
     private final boolean integers;
 
     BarChart(String title, List<String> labels, List<Double> values, boolean lowerIsBetter, String selected) {
-        super(440, TOP + labels.size() * ROW + 14);
+        super(380, TOP + labels.size() * ROW + 14);
         this.title = title;
         this.labels = labels;
         this.values = values;

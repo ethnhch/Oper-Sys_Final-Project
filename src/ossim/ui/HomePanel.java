@@ -27,6 +27,10 @@ final class HomePanel extends JPanel implements Scrollable {
     /** Static description of a module card. */
     record ModuleInfo(String number, String title, Icons.Kind icon, String category, String blurb, List<String> algorithms) { }
 
+    private final JPanel steps = Ui.clear(new GridLayout(1, 3, Theme.GAP, Theme.GAP));
+    private final JPanel grid = Ui.clear(new GridLayout(0, 2, Theme.GAP, Theme.GAP));
+    private final JPanel guide = Ui.clear(new GridLayout(1, 4, Theme.GAP, Theme.GAP));
+
     HomePanel(List<ModuleInfo> modules, IntConsumer open) {
         super(new BorderLayout(0, 20));
         setOpaque(false);
@@ -38,7 +42,6 @@ final class HomePanel extends JPanel implements Scrollable {
                 + "side-by-side comparison of every algorithm. Enter as many items as you like: the only limit is your "
                 + "computer's memory."), BorderLayout.CENTER);
 
-        JPanel steps = Ui.clear(new GridLayout(1, 3, Theme.GAP, 0));
         steps.add(step("1", "Pick a module", "Use the menu on the left or press Ctrl+1 to Ctrl+8."));
         steps.add(step("2", "Enter or load data", "Type rows, or press Load Sample (textbook) or Load Large (thousands)."));
         steps.add(step("3", "Run and compare", "Press Run (Ctrl+Enter). Read the stat tiles, charts and the comparison tab."));
@@ -47,7 +50,6 @@ final class HomePanel extends JPanel implements Scrollable {
         top.add(hero, BorderLayout.NORTH);
         top.add(steps, BorderLayout.CENTER);
 
-        JPanel grid = Ui.clear(new GridLayout(0, 2, Theme.GAP, Theme.GAP));
         for (int i = 0; i < modules.size(); i++) {
             int index = i;
             grid.add(new ModuleCard(modules.get(i), () -> open.accept(index)));
@@ -78,9 +80,26 @@ final class HomePanel extends JPanel implements Scrollable {
         return card;
     }
 
-    private static JComponent layoutGuide() {
+    /** Reflows the overview: module cards in 2 columns or 1, quick-start steps and guide in a row or stacked. */
+    void adapt(int width) {
+        int pad = width < 900 ? 16 : 32;
+        setBorder(BorderFactory.createEmptyBorder(pad + 4, pad, pad, pad));
+        regrid(grid, 0, width >= 1000 ? 2 : 1);
+        regrid(steps, width >= 860 ? 1 : 0, width >= 860 ? 3 : 1);
+        regrid(guide, width >= 1000 ? 1 : 0, width >= 1000 ? 4 : width >= 600 ? 2 : 1);
+    }
+
+    private static void regrid(JPanel panel, int rows, int cols) {
+        GridLayout g = (GridLayout) panel.getLayout();
+        if (g.getRows() != rows || g.getColumns() != cols) {
+            panel.setLayout(new GridLayout(rows, cols, Theme.GAP, Theme.GAP));
+            panel.revalidate();
+        }
+    }
+
+    private JComponent layoutGuide() {
         Ui.Card card = new Ui.Card("Every module screen has the same layout", Icons.Kind.INFO);
-        JPanel cols = Ui.clear(new GridLayout(1, 4, Theme.GAP, 0));
+        JPanel cols = guide;
         cols.add(guideItem("Header", "What the module does and the rules it follows."));
         cols.add(guideItem("Input card", "Tables you can grow row by row, list boxes, options, then Load / Run."));
         cols.add(guideItem("Stat tiles + tabs", "Key numbers first, then charts, step tables and the algorithm comparison."));

@@ -34,6 +34,15 @@ public final class MainFrame extends JFrame {
     private final List<ModulePanel> modules = new ArrayList<>();
     private final Sidebar sidebar;
     private int current = -1;
+    private HomePanel home;
+    /** The user's own choice from clicking the logo; null = follow the window width. */
+    private Boolean manualCompact;
+    private boolean lastAutoCompact;
+
+    /** Window width below which the sidebar collapses to an icon rail. */
+    static final int RAIL_BELOW = 1180;
+    static final int MIN_WIDTH = 720;
+    static final int MIN_HEIGHT = 540;
 
     public MainFrame() {
         super("MiniOS · Operating System Simulator");
@@ -55,9 +64,10 @@ public final class MainFrame extends JFrame {
             ModulePanel m = modules.get(i);
             entries.add(new Sidebar.Entry(i, (i + 1) + ".  " + navLabels[i], m.icon, groups[i], "Ctrl+" + (i + 1)));
         }
-        sidebar = new Sidebar(entries, this::show, this::toggleTheme);
+        sidebar = new Sidebar(entries, this::show, this::toggleTheme, this::toggleCompact);
 
-        work.add(Ui.scroll(new HomePanel(homeCards(), this::show)), HOME);
+        home = new HomePanel(homeCards(), this::show);
+        work.add(Ui.scroll(home), HOME);
         for (int i = 0; i < modules.size(); i++) {
             work.add(modules.get(i), String.valueOf(i));
         }
@@ -68,9 +78,15 @@ public final class MainFrame extends JFrame {
         setContentPane(root);
         bindKeys(root);
         show(-1);
+        root.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                adaptLayout();
+            }
+        });
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setMinimumSize(new Dimension(1100, 680));
+        setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
         setSize(Math.min(1480, screen.width - 40), Math.min(900, screen.height - 60));
         setLocationRelativeTo(null);
@@ -109,6 +125,40 @@ public final class MainFrame extends JFrame {
         cards.show(work, index < 0 ? HOME : String.valueOf(index));
         sidebar.select(index);
         setTitle(index < 0 ? "MiniOS · Operating System Simulator" : "MiniOS · " + modules.get(index).title);
+    }
+
+    /**
+     * Responsive behaviour, re-evaluated on every resize: collapse the sidebar on narrow windows, then tell the
+     * overview and every module screen how much room they have so they can reflow.
+     */
+    private void adaptLayout() {
+        int width = getContentPane().getWidth();
+        int height = getContentPane().getHeight();
+        if (width <= 0) {
+            return;
+        }
+        boolean autoCompact = width < RAIL_BELOW;
+        if (autoCompact != lastAutoCompact) {
+            manualCompact = null;
+            lastAutoCompact = autoCompact;
+        }
+        boolean compact = manualCompact != null ? manualCompact : autoCompact;
+        if (compact != sidebar.isCompact()) {
+            sidebar.setCompact(compact);
+        }
+        sidebar.adaptHeight(height);
+        int contentWidth = width - (compact ? Sidebar.RAIL : Sidebar.WIDTH);
+        home.adapt(contentWidth);
+        for (ModulePanel m : modules) {
+            m.adapt(contentWidth, height);
+        }
+        getContentPane().revalidate();
+        repaint();
+    }
+
+    private void toggleCompact() {
+        manualCompact = !sidebar.isCompact();
+        adaptLayout();
     }
 
     private void toggleTheme() {

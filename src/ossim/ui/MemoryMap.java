@@ -24,7 +24,7 @@ final class MemoryMap extends Chart {
     private final int maxSize;
 
     MemoryMap(Fragmentation.Result result) {
-        super(560, TOP + Math.min(result.blocks().size(), BLOCK_LIMIT) * ROW + 70);
+        super(420, TOP + Math.min(result.blocks().size(), BLOCK_LIMIT) * ROW + 70);
         this.result = result;
         shown = Math.min(result.blocks().size(), BLOCK_LIMIT);
         int max = 1;

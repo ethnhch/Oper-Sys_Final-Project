@@ -71,6 +71,8 @@ The dark **sidebar** is the main menu: *Overview* plus modules 1–8 grouped by 
 | Result tabs | The module's visual (Gantt chart, frame diagram, memory map, head path, …), step-by-step tables (sortable, verdicts as coloured pills) and **Compare Algorithms** (bar chart + table, best result tagged) |
 | How it was calculated | Plain-text summary with the formulas used |
 
+**Responsive layout:** the window can shrink to 720 × 540. Below 1180 px wide the sidebar becomes an icon rail (click the logo to toggle it). When the work area is narrower than 960 px, each module switches to an **Input | Results** switch and Run jumps to the results. On short windows the description hides and the menu scrolls. Details in [docs/UI-UX.md](docs/UI-UX.md#2a-responsive-layout).
+
 **Keyboard:** `Ctrl+1…8` open a module, `Ctrl+0` overview, `Ctrl+Enter` run, `Ctrl+D` dark/light mode (`Cmd` on macOS). Hover over any chart element for its exact values.
 
 **Dynamic input:** tables grow row by row; reference strings and request lists are free text of any length; the Banker's tables are generated from the process/resource counts you type. The only numeric limit is **1,000,000 per single value** (to keep sums inside `int`). There is **no limit on the number of items**.
