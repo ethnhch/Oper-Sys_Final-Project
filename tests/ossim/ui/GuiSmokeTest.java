@@ -2,19 +2,19 @@ package ossim.ui;
 
 import javax.swing.AbstractButton;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.HeadlessException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
 /**
  * Drives each real panel through its buttons without a display.
- * Valid input must run silently; invalid input must reach the error dialog (HeadlessException here)
- * instead of crashing with any other exception.
+ * Valid input must run without any error message and must produce results; invalid input must produce an inline
+ * validation message (never an unexpected exception), and the faulty field must be flagged when one is named.
  */
 public final class GuiSmokeTest {
     private static int failures;
@@ -29,6 +29,7 @@ public final class GuiSmokeTest {
             validRun(name, factory.get(), "Run");
             validRun(name, factory.get(), "Load Large", "Run");
             invalidRun(name, factory.get());
+            narrowRun(name, factory.get());
         }
         System.out.println(failures == 0 ? "\nGUI smoke test: ALL OK" : "\nGUI smoke test: " + failures + " FAILURE(S)");
         System.exit(failures == 0 ? 0 : 1);
@@ -40,9 +41,26 @@ public final class GuiSmokeTest {
             for (String label : clicks) {
                 click(panel, label);
             }
-            report(true, name + " valid [" + String.join(" > ", clicks) + "] " + (System.nanoTime() - start) / 1_000_000 + " ms");
+            boolean ok = panel.lastError() == null && panel.output.hasResults();
+            report(ok, name + " valid [" + String.join(" > ", clicks) + "] " + (System.nanoTime() - start) / 1_000_000 + " ms"
+                    + (ok ? "" : " -> unexpected message: " + panel.lastError()));
         } catch (RuntimeException e) {
             report(false, name + " valid [" + String.join(" > ", clicks) + "] threw " + e);
+        }
+    }
+
+    /** Narrow window: the screen must switch to "Input | Results" tabs and jump to Results after a run. */
+    private static void narrowRun(String name, ModulePanel panel) {
+        try {
+            panel.adapt(700, 600);
+            boolean stacked = panel.isStacked();
+            click(panel, "Run");
+            boolean ok = stacked && panel.lastError() == null && panel.visiblePane() == 1 && panel.output.hasResults();
+            panel.adapt(1300, 900);
+            ok &= !panel.isStacked();
+            report(ok, name + " responsive: narrow layout stacks, Run shows Results, wide layout restores split");
+        } catch (RuntimeException e) {
+            report(false, name + " responsive layout threw " + e);
         }
     }
 
@@ -59,9 +77,18 @@ public final class GuiSmokeTest {
         }
         try {
             click(panel, panel instanceof BankerPanel ? "Build Tables" : "Run");
-            report(false, name + " invalid input was silently accepted");
-        } catch (HeadlessException expectedDialog) {
-            report(true, name + " invalid input -> validation dialog (no crash)");
+            if (panel.lastError() == null) {
+                report(false, name + " invalid input was silently accepted");
+            } else if (panel.unexpectedError()) {
+                report(false, name + " invalid input caused an unexpected error: " + panel.lastError());
+            } else {
+                boolean flagged = false;
+                for (Component c : all(panel)) {
+                    flagged |= c instanceof JComponent jc && Boolean.TRUE.equals(jc.getClientProperty(Ui.ERROR_KEY));
+                }
+                report(true, name + " invalid input -> inline message" + (flagged ? " + field outlined" : "")
+                        + ": \"" + panel.lastError() + "\"");
+            }
         } catch (RuntimeException e) {
             report(false, name + " invalid input crashed with " + e);
         }

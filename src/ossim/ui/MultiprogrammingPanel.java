@@ -11,19 +11,17 @@ import java.util.Random;
 
 /** Module 8: multiprogramming. */
 final class MultiprogrammingPanel extends ModulePanel {
-    private final InputTable programs = new InputTable("Programs", "Program", "Arrival", "Memory", "CPU Burst");
-    private final JTextField totalMemory = new JTextField("100", 6);
-    private final JTextField quantum = new JTextField("4", 6);
+    private final InputTable programs = table(new InputTable("Programs", "Program", "Arrival", "Memory", "CPU Burst"), "Row ");
+    private final JTextField totalMemory = field("Total memory", "100", 6);
+    private final JTextField quantum = field("Time quantum", "4", 6);
 
     MultiprogrammingPanel() {
-        super("<b>Multiprogramming</b> - several programs share main memory and the CPU. Programs are admitted first-come "
-                + "first-served while memory allows (a program that does not fit blocks the queue), and resident programs "
-                + "share the CPU by Round Robin. The timeline shows memory use, resident programs and the waiting queue; "
-                + "the summary reports CPU/memory utilization and the degree of multiprogramming.");
-        arrange(programs,
-                Ui.flow(new javax.swing.JLabel("Total memory:"), totalMemory, new javax.swing.JLabel("Time quantum:"), quantum),
-                Ui.flow(action("Load Sample", this::loadSample), action("Load Large (300)", this::loadLarge),
-                        action("Run", this::run)));
+        super("Multiprogramming", Icons.Kind.STACK, "System",
+                "Several programs share main memory and the CPU. Programs are admitted first-come first-served while "
+                + "memory allows (one that does not fit blocks the queue), and resident programs share the CPU by Round "
+                + "Robin. The timeline shows who runs, memory in use and who waits; the tiles report utilization.");
+        arrange(programs, Ui.row(Ui.form("Total memory", totalMemory), Ui.form("Time quantum", quantum)));
+        actions(this::loadSample, "Load Large (300)", this::loadLarge, this::run);
         loadSample();
     }
 
@@ -63,6 +61,12 @@ final class MultiprogrammingPanel extends ModulePanel {
         Multiprogramming.Result r = Multiprogramming.run(jobs, memory, q);
 
         output.reset();
+        output.addStat("CPU util.", Ui.two(r.cpuUtilization()) + " %", Theme.Tone.ACCENT, "finish at t = " + r.finish());
+        output.addStat("Memory util.", Ui.two(r.avgMemoryUtilization()) + " %", Theme.Tone.NEUTRAL, "time-weighted");
+        output.addStat("Max degree", String.valueOf(r.maxDegree()), Theme.Tone.SUCCESS, "in memory at once");
+        output.addStat("Throughput", String.format(java.util.Locale.ROOT, "%.4f", r.throughput()), Theme.Tone.NEUTRAL,
+                "jobs / time unit");
+        output.addComponent("Timeline Chart", new MemoryTimeline(r));
         output.addTable("System Timeline", new String[]{"Start", "End", "Running", "Resident (degree)", "Memory used",
                 "Memory %", "Waiting for memory"}, timelineRows(r));
         output.addTable("Programs", new String[]{"Program", "Arrival", "Memory", "Burst", "Admitted", "Completion",

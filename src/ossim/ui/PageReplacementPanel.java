@@ -5,13 +5,9 @@ import ossim.core.PageReplacement.Algorithm;
 import ossim.core.PageReplacement.Result;
 import ossim.util.Parse;
 
-import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -19,20 +15,17 @@ import java.util.Random;
 /** Module 4: page replacement. */
 final class PageReplacementPanel extends ModulePanel {
     private final JTextArea references = Ui.textArea(8, "");
-    private final JTextField frames = new JTextField("3", 5);
+    private final JTextField frames = field("Number of frames", "3", 5);
     private final JComboBox<Algorithm> algorithm = new JComboBox<>(Algorithm.values());
 
     PageReplacementPanel() {
-        super("<b>Page Replacement</b> - enter a reference string of any length and the number of frames. FIFO, LRU, Optimal "
-                + "and Second Chance are supported; the trace shows every frame change, hit and fault, and all algorithms "
-                + "are compared on each run.");
-        JPanel box = new JPanel(new BorderLayout());
-        box.setBorder(BorderFactory.createTitledBorder("Reference string (numbers separated by commas or spaces)"));
-        box.add(Ui.scroll(references), BorderLayout.CENTER);
-        arrange(box,
-                Ui.flow(new JLabel("Frames:"), frames, new JLabel("Algorithm:"), algorithm),
-                Ui.flow(action("Load Sample", this::loadSample), action("Load Large (5000)", this::loadLarge),
-                        action("Run", this::run)));
+        super("Page Replacement", Icons.Kind.SWAP, "Memory",
+                "Choose which page leaves memory when a new page is needed and every frame is full. Enter a reference "
+                + "string of any length and the number of frames. FIFO, LRU, Optimal and Second Chance (Clock) are "
+                + "supported; the frame diagram shows every change, hit and fault, and all algorithms are compared.");
+        arrange(listInput("Reference string", "Page numbers separated by commas or spaces", references, "Reference string"),
+                Ui.row(Ui.form("Frames", frames), Ui.form("Algorithm", algorithm)));
+        actions(this::loadSample, "Load Large (5000)", this::loadLarge, this::run);
         loadSample();
     }
 
@@ -57,13 +50,29 @@ final class PageReplacementPanel extends ModulePanel {
         Algorithm selected = (Algorithm) algorithm.getSelectedItem();
         Result result = PageReplacement.run(selected, refs, frameCount);
 
+        List<Object[]> comparison = comparison(refs, frameCount);
+        List<String> names = new ArrayList<>();
+        List<Double> faults = new ArrayList<>();
+        for (Object[] row : comparison) {
+            names.add((String) row[0]);
+            faults.add(((Integer) row[2]).doubleValue());
+        }
         output.reset();
+        output.addStat("Page faults", Ui.grouped(result.faults()), Theme.Tone.DANGER, Ui.two(result.faultRatio()) + " % fault rate");
+        output.addStat("Page hits", Ui.grouped(result.hits()), Theme.Tone.SUCCESS, Ui.two(result.hitRatio()) + " % hit rate");
+        output.addStat("References", Ui.grouped(refs.size()), Theme.Tone.NEUTRAL, frameCount + " frames");
+        output.addStat("Optimal faults", Ui.grouped(PageReplacement.run(Algorithm.OPTIMAL, refs, frameCount).faults()),
+                Theme.Tone.ACCENT, "lower bound");
+        output.addComponent("Frame Diagram", new FrameGrid(result, frameCount));
         output.addTable("Frame Trace (" + selected + ")", traceColumns(frameCount), traceRows(result));
-        output.addTable("Comparison", new String[]{"Algorithm", "Hits", "Faults", "Hit %", "Fault %"}, comparison(refs, frameCount));
+        output.addChartAndTable("Compare Algorithms", new BarChart("Page faults", names, faults, true, selected.toString()),
+                new String[]{"Algorithm", "Hits", "Faults", "Hit %", "Fault %"}, comparison);
         output.setSummary("Algorithm: " + selected + "   Frames: " + frameCount + "   References: " + refs.size() + "\n"
                 + "Page hits  : " + result.hits() + " (" + Ui.two(result.hitRatio()) + " %)\n"
                 + "Page faults: " + result.faults() + " (" + Ui.two(result.faultRatio()) + " %)\n"
-                + "Optimal gives the minimum possible faults; FIFO may suffer Belady's anomaly (more frames, more faults).");
+                + "Optimal gives the minimum possible faults; FIFO may suffer Belady's anomaly (more frames, more faults)."
+                + (refs.size() > FrameGrid.STEP_LIMIT ? "\nFrame diagram shows the first " + FrameGrid.STEP_LIMIT
+                + " references; the Frame Trace table lists all " + refs.size() + "." : ""));
     }
 
     private static String[] traceColumns(int frameCount) {

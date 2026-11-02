@@ -22,20 +22,19 @@ final class CpuPanel extends ModulePanel {
 
     private record Input(List<Proc> procs, boolean hasPriority) { }
 
-    private final InputTable processes = new InputTable("Processes (add as many rows as you need)",
-            "PID", "Arrival", "Burst", "Priority");
+    private final InputTable processes = table(new InputTable("Processes", "PID", "Arrival", "Burst", "Priority"), "Row ");
     private final JComboBox<Algorithm> algorithm = new JComboBox<>(Algorithm.values());
-    private final JTextField quantum = new JTextField("4", 5);
+    private final JTextField quantum = field("Time quantum", "4", 5);
 
     CpuPanel() {
-        super("<b>CPU Scheduling</b> - FCFS, SJF, SRTF, Priority (both modes) and Round Robin. A comparison of every algorithm "
-                + "is produced on each run. Lower priority number = higher priority; leave Priority blank when unused.");
-        arrange(processes,
-                Ui.labeled("Algorithm:", algorithm),
-                Ui.labeled("Time quantum (Round Robin):", quantum),
-                Ui.flow(action("Load Sample", this::loadSample),
-                        action("Load Large (1000)", this::loadLarge),
-                        action("Run", this::run)));
+        super("CPU Scheduling", Icons.Kind.CPU, "Processes",
+                "Decide which ready process runs next. FCFS, SJF, SRTF, Priority (both modes) and Round Robin are "
+                + "supported and every run also compares all algorithms. A lower priority number means a higher priority; "
+                + "leave Priority blank when it is not used.");
+        algorithm.addActionListener(e -> quantum.setEnabled(algorithm.getSelectedItem() == Algorithm.ROUND_ROBIN));
+        arrange(processes, Ui.row(Ui.form("Algorithm", algorithm), Ui.form("Time quantum (RR)", quantum)));
+        actions(this::loadSample, "Load Large (1000)", this::loadLarge, this::run);
+        quantum.setEnabled(false);
         loadSample();
     }
 
@@ -82,10 +81,23 @@ final class CpuPanel extends ModulePanel {
         }
         Result result = CpuScheduler.run(selected, input.procs(), q);
 
+        List<Object[]> comparison = comparisonRows(input, q);
         output.reset();
-        output.addTable("Results", RESULT_COLUMNS, resultRows(result, input.hasPriority()));
+        output.addStat("Avg waiting", Ui.two(result.avgWaiting()), Theme.Tone.ACCENT, "time units");
+        output.addStat("Avg turnaround", Ui.two(result.avgTurnaround()), Theme.Tone.NEUTRAL, "time units");
+        output.addStat("Avg response", Ui.two(result.avgResponse()), Theme.Tone.NEUTRAL, "time units");
+        output.addStat("CPU utilization", Ui.two(result.cpuUtilization()) + " %",
+                result.cpuUtilization() >= 99.99 ? Theme.Tone.SUCCESS : Theme.Tone.WARNING, result.rows().size() + " processes");
         output.addComponent("Gantt Chart", new GanttChart(result.gantt()));
-        output.addTable("Comparison", COMPARE_COLUMNS, comparisonRows(input, q));
+        output.addTable("Per-process Results", RESULT_COLUMNS, resultRows(result, input.hasPriority()));
+        List<String> names = new ArrayList<>();
+        List<Double> waits = new ArrayList<>();
+        for (Object[] row : comparison) {
+            names.add((String) row[0]);
+            waits.add(Double.parseDouble((String) row[1]));
+        }
+        output.addChartAndTable("Compare Algorithms", new BarChart("Average waiting time", names, waits, true,
+                selected.toString()), COMPARE_COLUMNS, comparison);
         output.setSummary(summary(result, q, input));
     }
 

@@ -16,7 +16,11 @@ java -jar MiniOS.jar    # starts the simulator
 ./test.sh               # runs both test suites
 ```
 
-Every module has three buttons: **Load Sample** (small textbook dataset), **Load Large** (hundreds to thousands of items), and **Run**.
+Every module has three buttons: **Load Sample** (small textbook dataset), **Load Large** (hundreds to thousands of items), and **Run** (`Ctrl+Enter`).
+
+![MiniOS overview](docs/screenshots/00-home.png)
+
+The full UI/UX design (layout, design tokens, components, per-module visuals, error handling, shortcuts) is documented in **[docs/UI-UX.md](docs/UI-UX.md)**.
 
 ---
 
@@ -30,11 +34,16 @@ MiniOS/
 │   ├── core/   one class per module         PURE LOGIC, no Swing  (the algorithms)
 │   │           CpuScheduler, BankersAlgorithm, Paging, PageReplacement,
 │   │           Segmentation, Fragmentation, DiskScheduler, Multiprogramming
-│   └── ui/     one panel per module         Swing only, no algorithms
-│               MainFrame, ModulePanel (base), InputTable, MatrixTable,
-│               OutputPane, GanttChart, HeadPathChart + 8 *Panel classes
+│   └── ui/     Swing only, no algorithms
+│               design system: Theme, FlatUI, Icons, Ui, Tables
+│               shell:         MainFrame, Sidebar, HomePanel
+│               template:      ModulePanel (base), OutputPane, InputTable, MatrixTable
+│               visuals:       Chart (base), GanttChart, HeadPathChart, BarChart, FrameGrid,
+│                              MemoryMap, SegmentMap, SequenceStrip, MemoryTimeline, PageMap
+│               screens:       8 *Panel classes (one per module)
 ├── tests/      SelfTest (algorithms), GuiSmokeTest (panels)
 ├── build.sh / build.bat / test.sh / manifest.txt
+├── docs/       UI-UX.md (design document), screenshots/
 ├── MiniOS.jar                       runnable package
 └── README.md, TEST_RESULTS_*.txt
 ```
@@ -44,23 +53,37 @@ MiniOS/
 - **One class per module**, each with a single public entry point (`run`, `analyze`, `translate`).
 - **Immutable `record`s** carry results (`Result`, `Row`, `Step`, `Move`…), so panels only read data.
 - **One shared base class** (`ModulePanel`) gives every screen the same layout and the same error handling, so there is no duplicated UI code.
-- **One validation path:** parsing throws `InputException`; `ModulePanel.action()` is the only place that catches it and shows a dialog.
+- **One validation path:** parsing throws `InputException`; `ModulePanel.guarded()` is the only place that catches it, shows the inline error banner and outlines the faulty field or table row.
+- **One design system:** colours, fonts and spacing come from `Theme` tokens, so all screens match and the light/dark switch repaints everything.
 
 ---
 
 ## 3. GUI Guide
 
-The left tab strip is the main menu (modules 1–8). Each screen has the same layout:
+The dark **sidebar** is the main menu: *Overview* plus modules 1–8 grouped by OS area (Processes, Memory, Storage, System). The **Overview** screen explains the workflow and has one card per module. Every module screen uses the same template:
 
 | Area | Content |
 |---|---|
-| Top | One-paragraph description of the module |
-| Left | Input tables (**Add Row / Remove Selected / Clear**) or text areas, option selectors, and the **Load Sample / Load Large / Run** buttons |
-| Right | Result tabs (tables, charts) and a text summary with totals and formulas |
+| Header | Module icon, title, category and a one-paragraph description of the concept |
+| Banner | Inline, non-blocking message: green "Done in N ms", blue "Sample loaded", red validation error |
+| Input card (left) | Input tables with a live **row count** (**Add Row / Remove Selected / Clear**, or Insert key) or list boxes with a live **value count**; an *Options* section; the action bar **Load Sample · Load Large · ▶ Run** |
+| Stat tiles (right, top) | The 4 key numbers of the run (e.g. average waiting time, page faults, SAFE/UNSAFE, total head movement) |
+| Result tabs | The module's visual (Gantt chart, frame diagram, memory map, head path, …), step-by-step tables (sortable, verdicts as coloured pills) and **Compare Algorithms** (bar chart + table, best result tagged) |
+| How it was calculated | Plain-text summary with the formulas used |
+
+**Light and dark mode:** the Charcoal & Coral theme has both modes. Switch with the Light/Dark control on the Overview, the sun/moon button on every module, the sidebar item, or `Ctrl+D`. The app remembers your choice; `java -Dossim.theme=dark -jar MiniOS.jar` forces a mode.
+
+**Responsive layout:** the window can shrink to 720 × 540. Below 1180 px wide the sidebar becomes an icon rail (click the logo to toggle it). When the work area is narrower than 960 px, each module switches to an **Input | Results** switch and Run jumps to the results. On short windows the description hides and the menu scrolls. Details in [docs/UI-UX.md](docs/UI-UX.md#2a-responsive-layout).
+
+**Keyboard:** `Ctrl+1…8` open a module, `Ctrl+0` overview, `Ctrl+Enter` run, `Ctrl+D` dark/light mode (`Cmd` on macOS). Hover over any chart element for its exact values.
 
 **Dynamic input:** tables grow row by row; reference strings and request lists are free text of any length; the Banker's tables are generated from the process/resource counts you type. The only numeric limit is **1,000,000 per single value** (to keep sums inside `int`). There is **no limit on the number of items**.
 
-**Error handling:** blank fields, non-numbers, negative values, out-of-range values and inconsistent data (duplicate IDs, Allocation > Max, request beyond the disk, frame out of range, …) show a message naming the row and field. They never crash the program.
+**Error handling:** blank fields, non-numbers, negative values, out-of-range values and inconsistent data (duplicate IDs, Allocation > Max, request beyond the disk, frame out of range, …) produce a red banner naming the row and field. The faulty field gets a red outline and focus, or the faulty table row is highlighted and scrolled into view. The program never crashes and never blocks with a pop-up.
+
+| Validation of a table row | Validation of a field |
+|---|---|
+| ![Row error](docs/screenshots/20-cpu-error-row.png) | ![Field error](docs/screenshots/21-disk-error-field.png) |
 
 ---
 
@@ -201,7 +224,7 @@ Run `./test.sh`. Results are stored in `TEST_RESULTS_core.txt` (103 checks) and 
 - **Exceptional cases:** burst 0, duplicate IDs, quantum 0, Allocation > Max, frame out of range, request beyond disk, job larger than total memory, empty input.
 - **Large datasets:** 5,000 processes, 300×8 Banker's system, 20,000 page references, 20,000 disk requests, 2,000 blocks × 2,000 processes, 1,000 multiprogrammed jobs, 20,000 address translations. Checks are invariants: executed time equals total burst, every request is served, OPT ≤ LRU and OPT ≤ FIFO, SSTF ≤ FCFS, utilization ≤ 100 %.
 
-**B. GUI tests (`GuiSmokeTest`)** drive each real panel through its buttons: *Run* on sample data, *Load Large → Run*, and invalid input (cleared tables, text in numeric fields). Invalid input must reach the validation dialog, never an unexpected exception.
+**B. GUI tests (`GuiSmokeTest`)** drive each real panel through its buttons: *Run* on sample data and *Load Large → Run* must finish with results and no message; invalid input (cleared tables, text in numeric fields) must produce the inline validation message (and outline the named field), never an unexpected exception.
 
 ---
 
@@ -210,13 +233,13 @@ Run `./test.sh`. Results are stored in `TEST_RESULTS_core.txt` (103 checks) and 
 | Rubric section (points) | Where it is satisfied |
 |---|---|
 | **A. Implementation (40)** | All 8 modules, with every algorithm listed in the rubric examples plus extras (SRTF, preemptive priority, Clock, Next/Worst Fit, LOOK/C-LOOK) |
-| **B. GUI (10)** | Left-menu navigation, identical layout per module, tables/Gantt/head-path chart, validation messages, add/remove rows with no item cap |
+| **B. GUI (10)** | Sidebar + overview navigation and shortcuts; one page template for all modules; stat tiles, a dedicated chart per module, sortable tables and comparison charts; inline validation that points at the faulty field/row; live row counts and Load Large to prove there is no item cap. See [docs/UI-UX.md](docs/UI-UX.md) |
 | **C. Accuracy & testing (15)** | Section 6: normal, boundary, exceptional, small and large data; textbook-verified results; stability test |
 | **D. Source & submission (10)** | Layered packages, a documentation comment on every class, `MiniOS.jar`, build scripts, this document, sample I/O |
 | **E. Presentation (15)** | See section 8 |
 | **F. OS concepts (10)** | See section 9 |
 
-**Submission checklist:** source code ✔ · runnable JAR ✔ · dependencies (none) and run instructions ✔ · module/algorithm documentation ✔ · sample I/O ✔ · small + large test evidence ✔ · flexible input ✔ · validation without crashing ✔.
+**Submission checklist:** source code ✔ · runnable JAR ✔ · dependencies (none) and run instructions ✔ · module/algorithm documentation ✔ · sample I/O and screenshots (`docs/screenshots`) ✔ · small + large test evidence ✔ · flexible input ✔ · validation without crashing ✔.
 
 ---
 
@@ -225,7 +248,7 @@ Run `./test.sh`. Results are stored in `TEST_RESULTS_core.txt` (103 checks) and 
 | Time | What to show |
 |---|---|
 | 1 min | Title, goal, Java/Swing, the eight modules, `core` vs `ui` separation |
-| 2 min | Left menu, an input table (add/remove rows), result tabs, one invalid input producing a message |
+| 2 min | Overview screen and sidebar, an input table (add/remove rows, live row count), stat tiles and result tabs, one invalid input producing the red banner and outlined row; toggle dark mode with `Ctrl+D` if the room is bright |
 | 4 min | Load Sample then Run in each module: CPU Gantt + comparison; Banker's safe sequence (then Check Request); paging translation with a fault; page replacement trace; segmentation error; fragmentation (Dynamic/First Fit shows external fragmentation); disk chart; multiprogramming utilization. Press **Load Large** once to prove unlimited input |
 | 2 min | Explain one algorithm end to end (e.g., Banker's: Need → Work → sequence) and one challenge |
 | 1 min | Questions and conclusion |

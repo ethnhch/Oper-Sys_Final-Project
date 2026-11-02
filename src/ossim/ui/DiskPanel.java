@@ -6,14 +6,10 @@ import ossim.core.DiskScheduler.Direction;
 import ossim.core.DiskScheduler.Result;
 import ossim.util.Parse;
 
-import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -21,26 +17,32 @@ import java.util.Random;
 /** Module 7: disk scheduling. */
 final class DiskPanel extends ModulePanel {
     private final JTextArea requests = Ui.textArea(8, "");
-    private final JTextField head = new JTextField("53", 6);
-    private final JTextField maxCylinder = new JTextField("199", 6);
+    private final JTextField head = field("Initial head position", "53", 6);
+    private final JTextField maxCylinder = field("Highest cylinder", "199", 6);
     private final JComboBox<Algorithm> algorithm = new JComboBox<>(Algorithm.values());
     private final JComboBox<Direction> direction = new JComboBox<>(Direction.values());
     private final JCheckBox countJump = new JCheckBox("Count C-SCAN / C-LOOK return jump", true);
 
     DiskPanel() {
-        super("<b>Disk Scheduling</b> - FCFS, SSTF, SCAN, C-SCAN, LOOK and C-LOOK. Enter any number of cylinder requests, "
-                + "the initial head position and the highest cylinder. SCAN/C-SCAN go to the disk edge, LOOK/C-LOOK turn at "
-                + "the last request. All algorithms are compared on each run.");
-        JPanel box = new JPanel(new BorderLayout());
-        box.setBorder(BorderFactory.createTitledBorder("Cylinder requests (numbers separated by commas or spaces)"));
-        box.add(Ui.scroll(requests), BorderLayout.CENTER);
-        arrange(box,
-                Ui.flow(new JLabel("Head:"), head, new JLabel("Highest cylinder:"), maxCylinder),
-                Ui.flow(new JLabel("Algorithm:"), algorithm, new JLabel("Direction:"), direction),
-                Ui.flow(countJump),
-                Ui.flow(action("Load Sample", this::loadSample), action("Load Large (5000)", this::loadLarge),
-                        action("Run", this::run)));
+        super("Disk Scheduling", Icons.Kind.DISK, "Storage",
+                "Order pending cylinder requests to reduce how far the disk head travels. FCFS, SSTF, SCAN, C-SCAN, LOOK "
+                + "and C-LOOK are supported. SCAN and C-SCAN go to the disk edge, LOOK and C-LOOK turn at the last "
+                + "request. Every run also compares all algorithms.");
+        algorithm.addActionListener(e -> updateOptions());
+        arrange(listInput("Cylinder requests", "Cylinder numbers separated by commas or spaces", requests, "Cylinder request"),
+                Ui.row(Ui.form("Initial head", head), Ui.form("Highest cylinder", maxCylinder)),
+                Ui.row(Ui.form("Algorithm", algorithm), Ui.form("Direction", direction)),
+                Ui.row(countJump));
+        actions(this::loadSample, "Load Large (5000)", this::loadLarge, this::run);
+        updateOptions();
         loadSample();
+    }
+
+    /** Direction only matters for the sweeping algorithms, the jump option only for the circular ones. */
+    private void updateOptions() {
+        Algorithm a = (Algorithm) algorithm.getSelectedItem();
+        direction.setEnabled(a.usesDirection());
+        countJump.setEnabled(a == Algorithm.C_SCAN || a == Algorithm.C_LOOK);
     }
 
     private void loadSample() {
@@ -69,12 +71,30 @@ final class DiskPanel extends ModulePanel {
         boolean jump = countJump.isSelected();
         Result result = DiskScheduler.run(selected, list, start, max, dir, jump);
 
+        List<Object[]> comparison = comparisonRows(list, start, max, dir, jump);
+        List<String> names = new ArrayList<>();
+        List<Double> totals = new ArrayList<>();
+        String best = "";
+        double bestValue = Double.MAX_VALUE;
+        for (Object[] row : comparison) {
+            names.add((String) row[0]);
+            totals.add(((Integer) row[1]).doubleValue());
+            if ((Integer) row[1] < bestValue) {
+                bestValue = (Integer) row[1];
+                best = (String) row[0];
+            }
+        }
         output.reset();
+        output.addStat("Head movement", Ui.grouped(result.totalMovement()), Theme.Tone.ACCENT, "cylinders");
+        output.addStat("Avg / request", Ui.two((double) result.totalMovement() / list.size()), Theme.Tone.NEUTRAL,
+                "cylinders");
+        output.addStat("Requests", Ui.grouped(list.size()), Theme.Tone.NEUTRAL, "disk 0.." + max);
+        output.addStat("Best algorithm", best, Theme.Tone.SUCCESS, Ui.grouped((long) bestValue) + " cylinders");
+        output.addComponent("Head Movement", new HeadPathChart(start, result.moves(), max));
         output.addTable("Service Order", new String[]{"Step", "From", "To", "Distance", "Counted", "Cumulative", "Action"},
                 moveRows(result));
-        output.addComponent("Head Movement Chart", new HeadPathChart(start, result.moves(), max));
-        output.addTable("Comparison", new String[]{"Algorithm", "Total head movement", "Avg per request"},
-                comparisonRows(list, start, max, dir, jump));
+        output.addChartAndTable("Compare Algorithms", new BarChart("Total head movement", names, totals, true,
+                selected.toString()), new String[]{"Algorithm", "Total head movement", "Avg per request"}, comparison);
         List<String> order = new ArrayList<>();
         result.serviceOrder().forEach(c -> order.add(String.valueOf(c)));
         output.setSummary("Algorithm: " + selected + (selected.usesDirection() ? " (" + dir + ")" : "") + "\n"

@@ -5,7 +5,6 @@ import ossim.util.InputException;
 import ossim.util.Parse;
 
 import javax.swing.BoxLayout;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import java.util.ArrayList;
@@ -14,28 +13,33 @@ import java.util.Random;
 
 /** Module 2: deadlock avoidance with the Banker's Algorithm. */
 final class BankerPanel extends ModulePanel {
-    private final JTextField processCount = new JTextField("5", 4);
-    private final JTextField resourceCount = new JTextField("3", 4);
-    private final JTextField requestProcess = new JTextField("1", 4);
-    private final JTextField requestVector = new JTextField("1,0,2", 10);
-    private final JPanel tables = new JPanel();
+    private final JTextField processCount = field("Number of processes", "5", 4);
+    private final JTextField resourceCount = field("Number of resource types", "3", 4);
+    private final JTextField requestProcess = field("Request process number", "1", 4);
+    private final JTextField requestVector = field("Request vector", "1,0,2", 9);
+    private final JPanel tables = Ui.clear(null);
     private MatrixTable allocation;
     private MatrixTable max;
     private MatrixTable available;
 
     BankerPanel() {
-        super("<b>Banker's Algorithm</b> - choose the number of processes and resource types, press Build Tables, then enter "
-                + "Allocation, Max and Available. The program computes Need = Max - Allocation, runs the safety algorithm and "
-                + "prints a safe sequence when one exists. Check Request tests whether a new request can be granted safely.");
+        super("Deadlock · Banker's Algorithm", Icons.Kind.LOCK, "Processes",
+                "Avoid deadlock by granting resources only when the system stays safe. Set the number of processes and "
+                + "resource types, press Build Tables, then fill in Allocation, Max and Available. Run computes "
+                + "Need = Max - Allocation and searches for a safe sequence; Check Request tests one new request.");
         tables.setLayout(new BoxLayout(tables, BoxLayout.Y_AXIS));
-        arrange(Ui.scroll(tables),
-                Ui.flow(new JLabel("Processes:"), processCount, new JLabel("Resource types:"), resourceCount,
-                        action("Build Tables", this::buildFromFields)),
-                Ui.flow(new JLabel("Request: process #"), requestProcess, new JLabel("vector"), requestVector,
-                        action("Check Request", this::checkRequest)),
-                Ui.flow(action("Load Sample", this::loadSample),
-                        action("Load Large (200 x 10)", this::loadLarge),
-                        action("Run", this::run)));
+        var scroll = Ui.scroll(tables);
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
+        JPanel sizeRow = Ui.row(Ui.form("Processes (n)", processCount), Ui.form("Resource types (m)", resourceCount),
+                Ui.form(" ", action("Build Tables", Icons.Kind.GRID, this::buildFromFields)));
+        JPanel requestRow = Ui.row(Ui.form("Request by process #", requestProcess), Ui.form("Request vector", requestVector),
+                Ui.form(" ", action("Check Request", Icons.Kind.SHIELD, this::checkRequest)));
+        JPanel main = Ui.clear(new java.awt.BorderLayout(0, 6));
+        main.add(sizeRow, java.awt.BorderLayout.NORTH);
+        main.add(scroll, java.awt.BorderLayout.CENTER);
+        arrange(main, requestRow);
+        actions(this::loadSample, "Load Large (200 × 10)", this::loadLarge, this::run);
         loadSample();
     }
 
@@ -133,7 +137,23 @@ final class BankerPanel extends ModulePanel {
         List<Object[]> traceRows = new ArrayList<>();
         r.trace().forEach(line -> traceRows.add(new Object[]{line}));
 
+        List<Integer> blocked = new ArrayList<>();
+        for (int i = 0; i < r.need().length; i++) {
+            if (!r.safeSequence().contains(i)) {
+                blocked.add(i);
+            }
+        }
         output.reset();
+        output.addStat("Verdict", r.safe() ? "SAFE" : "UNSAFE", r.safe() ? Theme.Tone.SUCCESS : Theme.Tone.DANGER,
+                r.safe() ? "deadlock-free" : "deadlock possible");
+        output.addStat("Processes", String.valueOf(r.need().length), Theme.Tone.NEUTRAL, m + " resource types");
+        output.addStat("Can finish", r.safeSequence().size() + " / " + r.need().length,
+                r.safe() ? Theme.Tone.SUCCESS : Theme.Tone.WARNING, "in safety check");
+        output.addStat("Blocked", String.valueOf(blocked.size()), blocked.isEmpty() ? Theme.Tone.NEUTRAL : Theme.Tone.DANGER,
+                "Need > Work");
+        String headline = prefix.isEmpty() ? "Need = Max - Allocation · a process finishes when Need ≤ Work, then Work += Allocation"
+                : prefix.lines().findFirst().orElse("");
+        output.addComponent("Safe Sequence", new SequenceStrip(r.safe(), r.safeSequence(), blocked, headline));
         output.addTable("Need = Max - Allocation", columns, needRows);
         output.addTable("Safety Trace", new String[]{"Step"}, traceRows);
         List<String> sequence = new ArrayList<>();
