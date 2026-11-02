@@ -40,11 +40,12 @@ final class MatrixTable extends JPanel {
             }
         }
         table = new JTable(model);
-        table.setRowHeight(22);
+        Theme.styleTable(table);
         table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+        setOpaque(false);
         setBorder(BorderFactory.createTitledBorder(title));
         var scroll = Ui.scroll(table);
-        scroll.setPreferredSize(new Dimension(360, Math.min(rows, 6) * 22 + 28));
+        scroll.setPreferredSize(new Dimension(360, Math.min(rows, 6) * Theme.ROW_HEIGHT + Theme.ROW_HEIGHT + 10));
         add(scroll, BorderLayout.CENTER);
     }
 

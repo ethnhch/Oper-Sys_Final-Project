@@ -8,24 +8,27 @@ import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Editable table with Add / Remove / Clear: the user decides how many rows (items) to enter. */
+/** Editable table with Add / Remove / Clear and a live row counter: the user decides how many rows (items) to enter. */
 final class InputTable extends JPanel {
     private final DefaultTableModel model;
     private final JTable table;
     private final int columns;
+    private final javax.swing.JLabel count = Theme.label("0 rows", Theme.SMALL, Theme.TEXT_FAINT);
 
     InputTable(String title, String... columnNames) {
         super(new BorderLayout(4, 4));
         columns = columnNames.length;
         model = new DefaultTableModel(columnNames, 0);
         table = new JTable(model);
-        table.setRowHeight(22);
+        Theme.styleTable(table);
         table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+        setOpaque(false);
         setBorder(BorderFactory.createTitledBorder(title));
         add(Ui.scroll(table), BorderLayout.CENTER);
-        add(Ui.flow(Ui.button("Add Row", this::addRow),
-                Ui.button("Remove Selected", this::removeSelected),
-                Ui.button("Clear", this::clear)), BorderLayout.SOUTH);
+        add(Ui.flow(Ui.button("Add Row", ThemeButton.Kind.GHOST, this::addRow),
+                Ui.button("Remove Selected", ThemeButton.Kind.GHOST, this::removeSelected),
+                Ui.button("Clear", ThemeButton.Kind.GHOST, this::clear), count), BorderLayout.SOUTH);
+        model.addTableModelListener(e -> count.setText(model.getRowCount() + (model.getRowCount() == 1 ? " row" : " rows")));
     }
 
     private void addRow() {

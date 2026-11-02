@@ -30,7 +30,7 @@ final class PagingPanel extends ModulePanel {
         JPanel addressBox = new JPanel(new BorderLayout());
         addressBox.setBorder(BorderFactory.createTitledBorder("Logical addresses"));
         addressBox.add(Ui.scroll(addresses), BorderLayout.CENTER);
-        JPanel main = new JPanel(new java.awt.GridLayout(2, 1, 4, 4));
+        JPanel main = new JPanel(new java.awt.GridLayout(2, 1, 10, 10));
         main.add(pageTable);
         main.add(addressBox);
         arrange(main,

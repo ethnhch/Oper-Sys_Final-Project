@@ -20,7 +20,7 @@ final class SegmentationPanel extends ModulePanel {
         super("<b>Segmentation</b> - define any number of segments with a base address and a limit, then list logical addresses "
                 + "as (segment, offset). A translation is valid only when the segment exists and offset &lt; limit; "
                 + "otherwise an addressing error is reported. Physical = base + offset.");
-        JPanel main = new JPanel(new GridLayout(2, 1, 4, 4));
+        JPanel main = new JPanel(new GridLayout(2, 1, 10, 10));
         main.add(segments);
         main.add(addresses);
         arrange(main, Ui.flow(action("Load Sample", this::loadSample),

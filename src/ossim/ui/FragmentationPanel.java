@@ -25,7 +25,7 @@ final class FragmentationPanel extends ModulePanel {
         super("<b>Fragmentation</b> - enter any number of memory blocks and processes. <i>Fixed partitions</i> show internal "
                 + "fragmentation (unused space inside an allocated block); <i>dynamic partitions</i> split blocks and expose "
                 + "external fragmentation (enough free memory in total, but no single hole large enough).");
-        JPanel main = new JPanel(new GridLayout(2, 1, 4, 4));
+        JPanel main = new JPanel(new GridLayout(2, 1, 10, 10));
         main.add(blocks);
         main.add(processes);
         arrange(main,
