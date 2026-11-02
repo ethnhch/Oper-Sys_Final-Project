@@ -72,20 +72,42 @@ Other details:
 
 Components never hard-code colours. They ask for a *role*, which resolves differently in light and dark mode, so the theme toggle repaints everything.
 
+The palette is **Charcoal & Coral**: a charcoal sidebar and dark surfaces, coral for the accent, and a warm off-white canvas in light mode.
+
+![Charcoal & Coral palette board](screenshots/palette-board.png)
+
 | Role | Light | Dark | Used for |
 |---|---|---|---|
-| `BG` | `#F4F6FA` | `#0D1117` | page background |
-| `SURFACE` | `#FFFFFF` | `#161B22` | cards, tables, charts |
-| `SIDEBAR` | `#111827` | `#090C10` | navigation (dark in both themes) |
-| `TEXT` / `TEXT_MUTED` / `TEXT_FAINT` | `#111827` / `#4B5563` / `#6B7280` | `#E6EAF0` / `#A3ADBB` / `#848E9D` | body / secondary / hint text |
-| `ACCENT` | `#2563EB` | `#4C8DFF` | primary button, selection, active tab |
-| `SUCCESS` | `#15803D` | `#3FB868` | SAFE, HIT, OK, best algorithm |
-| `WARNING` | `#B45309` | `#E3A23B` | internal fragmentation, waiting |
-| `DANGER` | `#C62828` | `#F2645A` | UNSAFE, FAULT, ERROR, return jump |
+| `BG` | `#F6F2F0` | `#1E2328` | page background |
+| `SURFACE` | `#FFFFFF` | `#262D33` | cards, tables, charts |
+| `SIDEBAR` | `#262D33` | `#171B1F` | navigation (charcoal in both modes) |
+| `TEXT` / `TEXT_MUTED` / `TEXT_FAINT` | `#262D33` / `#4F565D` / `#6B7178` | `#E9ECEE` / `#A9B0B6` / `#8C949B` | body / secondary / hint text |
+| `ACCENT` | `#C24A32` | `#F07A65` | primary button, selection, active tab (brand coral `#E36A53` is darkened in light mode so white text on it stays readable) |
+| `SUCCESS` | `#1E7A4C` | `#4CC38A` | SAFE, HIT, OK, best algorithm |
+| `WARNING` | `#9A5B00` | `#F2B544` | internal fragmentation, waiting |
+| `DANGER` | `#B42345` | `#FF6B81` | UNSAFE, FAULT, ERROR, return jump (raspberry, so errors never look like the coral accent) |
 
-* **Series palette:** 10 colours that stay distinct in both themes. `P1`, `J1`, page `0`… always get the same colour, so a process has one colour in the Gantt chart, the legend and the safe-sequence chips.
+* **Series palette:** 10 colours that stay distinct in both themes (coral, teal, amber, slate blue, sage, plum, sky, rose, olive, steel). `P1`, `J1`, page `0`… always get the same colour, so a process has one colour in the Gantt chart, the legend and the safe-sequence chips.
 * **Type scale:** H1 22 bold · H2 15 bold · body 13 · small 12 · stat value 22 bold · monospace 12 for numbers and formulas. The font is the first one installed from *Segoe UI → Inter → SF Pro → Helvetica Neue → Roboto*, so the app looks native on Windows, macOS and Linux.
 * **Shape and space:** 10 px radius, 12 px gap grid, 30 px table rows.
+
+---
+
+## 3a. Light and dark mode
+
+Both modes use the same tokens, so every screen, chart and table switches together. There are four ways to switch:
+
+* the **Light | Dark** switch at the top right of the Overview;
+* the **sun / moon button** at the top right of every module screen;
+* the **Dark mode / Light mode** item at the bottom of the sidebar;
+* `Ctrl+D` (`Cmd+D` on macOS).
+
+The app **remembers the last choice** (saved with `java.util.prefs`) and opens in that mode next time. To force a mode for a presentation, use `java -Dossim.theme=dark -jar MiniOS.jar` (or `light`).
+
+| Light | Dark |
+|---|---|
+| ![Light](screenshots/00-home.png) | ![Dark](screenshots/33-dark-home.png) |
+| ![Light CPU](screenshots/01-cpu.png) | ![Dark CPU](screenshots/30-dark-cpu.png) |
 
 ---
 
@@ -156,7 +178,7 @@ Large inputs stay usable. Charts scroll sideways or downward, labels are dropped
 
 * Every text and status colour has at least 4.5:1 contrast against the card surface in both themes (WCAG AA for normal text; the lowest is hint text at 4.6:1). Status is never shown by colour alone: every coloured pill also carries a word or letter (HIT/FAULT, H/F, SAFE/UNSAFE, "best").
 * Full keyboard use: Tab order follows the visual order, focus rings are visible, and tables support Insert to add a row and in-cell editing starts with a single click.
-* Dark mode (`Ctrl+D`) helps with projector demos in a bright room or a long session in a dark one.
+* Dark mode (`Ctrl+D`, remembered between runs) helps with projector demos in a bright room or a long session in a dark one.
 
 ---
 

@@ -65,6 +65,8 @@ public final class MainFrame extends JFrame {
             entries.add(new Sidebar.Entry(i, (i + 1) + ".  " + navLabels[i], m.icon, groups[i], "Ctrl+" + (i + 1)));
         }
         sidebar = new Sidebar(entries, this::show, this::toggleTheme, this::toggleCompact);
+        sidebar.themeChanged(Theme.isDark());
+        Theme.setToggler(this::toggleTheme);
 
         home = new HomePanel(homeCards(), this::show);
         work.add(Ui.scroll(home), HOME);

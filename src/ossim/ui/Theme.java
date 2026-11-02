@@ -30,31 +30,29 @@ public final class Theme {
     enum Tone { NEUTRAL, ACCENT, SUCCESS, WARNING, DANGER }
 
     private static final Color[] LIGHT = {
-            rgb(0xF4F6FA), rgb(0xFFFFFF), rgb(0xF8FAFC), rgb(0x111827), rgb(0x1F2937), rgb(0x2B3A55),
-            rgb(0xE3E7EE), rgb(0xCBD2DC),
-            rgb(0x111827), rgb(0x4B5563), rgb(0x6B7280),
-            rgb(0x2563EB), rgb(0x1D4ED8), rgb(0xE6EEFF), rgb(0xFFFFFF),
-            rgb(0x15803D), rgb(0xE5F6EB), rgb(0xB45309), rgb(0xFDF2E1), rgb(0xC62828), rgb(0xFDE8E8),
-            rgb(0xEEF1F5), rgb(0xDCE7FE)
+            rgb(0xF6F2F0), rgb(0xFFFFFF), rgb(0xFBF7F5), rgb(0x262D33), rgb(0x323A41),
+            rgb(0x4A3A3A), rgb(0xECE3DF), rgb(0xD8CBC6), rgb(0x262D33), rgb(0x4F565D),
+            rgb(0x6B7178), rgb(0xC24A32), rgb(0xA63D28), rgb(0xFCEAE6), rgb(0xFFFFFF),
+            rgb(0x1E7A4C), rgb(0xE3F4EA), rgb(0x9A5B00), rgb(0xFBF0DC), rgb(0xB42345),
+            rgb(0xFBE6EA), rgb(0xF1EBE8), rgb(0xFBDDD5)
     };
 
     private static final Color[] DARK = {
-            rgb(0x0D1117), rgb(0x161B22), rgb(0x1C222B), rgb(0x090C10), rgb(0x161B22), rgb(0x1F2D45),
-            rgb(0x2A313C), rgb(0x3A4250),
-            rgb(0xE6EAF0), rgb(0xA3ADBB), rgb(0x848E9D),
-            rgb(0x4C8DFF), rgb(0x6EA2FF), rgb(0x18263D), rgb(0x0B1220),
-            rgb(0x3FB868), rgb(0x12291B), rgb(0xE3A23B), rgb(0x2E2312), rgb(0xF2645A), rgb(0x34171A),
-            rgb(0x222933), rgb(0x22385E)
+            rgb(0x1E2328), rgb(0x262D33), rgb(0x2C343B), rgb(0x171B1F), rgb(0x232A30),
+            rgb(0x3A2C2A), rgb(0x353D45), rgb(0x46505A), rgb(0xE9ECEE), rgb(0xA9B0B6),
+            rgb(0x8C949B), rgb(0xF07A65), rgb(0xF7937F), rgb(0x3B2A28), rgb(0x1E2328),
+            rgb(0x4CC38A), rgb(0x1C3329), rgb(0xF2B544), rgb(0x3A3020), rgb(0xFF6B81),
+            rgb(0x3D2229), rgb(0x30383F), rgb(0x4A3330)
     };
 
     /** Categorical series colours (process IDs, pages, programs). Chosen to stay distinct in both themes. */
     private static final Color[] SERIES_LIGHT = {
-            rgb(0x3B82F6), rgb(0x10B981), rgb(0xF59E0B), rgb(0x8B5CF6), rgb(0xEF4444),
-            rgb(0x06B6D4), rgb(0xEC4899), rgb(0x84CC16), rgb(0xF97316), rgb(0x6366F1)
+            rgb(0xE36A53), rgb(0x2A9D8F), rgb(0xE9A23B), rgb(0x4F6D8F), rgb(0x7FA36B),
+            rgb(0x9B5DA5), rgb(0x3E9BD4), rgb(0xD6577C), rgb(0xA69B3A), rgb(0x5C6B7A)
     };
     private static final Color[] SERIES_DARK = {
-            rgb(0x60A5FA), rgb(0x34D399), rgb(0xFBBF24), rgb(0xA78BFA), rgb(0xF87171),
-            rgb(0x22D3EE), rgb(0xF472B6), rgb(0xA3E635), rgb(0xFB923C), rgb(0x818CF8)
+            rgb(0xF07A65), rgb(0x3FBFAE), rgb(0xF2B544), rgb(0x7C9CC2), rgb(0x9CC285),
+            rgb(0xBE85C8), rgb(0x64B5E8), rgb(0xEE7C9C), rgb(0xC9BC5A), rgb(0x8A99A8)
     };
 
     static final int RADIUS = 10;
@@ -122,6 +120,43 @@ public final class Theme {
         dark = value;
         apply();
         LISTENERS.forEach(Runnable::run);
+        try {
+            java.util.prefs.Preferences.userNodeForPackage(Theme.class).putBoolean(PREF_DARK, value);
+        } catch (RuntimeException ignored) {
+            // preferences unavailable (locked-down machine): the choice simply is not remembered
+        }
+    }
+
+    private static final String PREF_DARK = "darkMode";
+    private static Runnable toggler;
+
+    /** The main window registers how to switch theme, so a button anywhere in the UI can ask for it. */
+    static void setToggler(Runnable value) {
+        toggler = value;
+    }
+
+    static void requestToggle() {
+        if (toggler != null) {
+            toggler.run();
+        } else {
+            setDark(!dark);
+        }
+    }
+
+    /**
+     * Start-up mode: {@code -Dossim.theme=dark|light} wins, otherwise the mode the user picked last time
+     * (remembered with java.util.prefs), otherwise light.
+     */
+    private static boolean initialDark() {
+        String forced = System.getProperty("ossim.theme");
+        if (forced != null) {
+            return forced.equalsIgnoreCase("dark");
+        }
+        try {
+            return java.util.prefs.Preferences.userNodeForPackage(Theme.class).getBoolean(PREF_DARK, false);
+        } catch (RuntimeException e) {
+            return false;
+        }
     }
 
     static void onChange(Runnable listener) {
@@ -137,7 +172,7 @@ public final class Theme {
     /** Readable text colour (dark or white) on top of the given fill. */
     static Color textOn(Color fill) {
         double luminance = (0.299 * fill.getRed() + 0.587 * fill.getGreen() + 0.114 * fill.getBlue()) / 255;
-        return luminance > 0.6 ? rgb(0x111827) : Color.WHITE;
+        return luminance > 0.6 ? rgb(0x262D33) : Color.WHITE;
     }
 
     /** Installs the cross-platform base look and feel, then overrides its defaults with the current tokens. */
@@ -147,6 +182,7 @@ public final class Theme {
         } catch (Exception ignored) {
             // Metal ships with every JDK; if it somehow fails the default look and feel is used.
         }
+        dark = initialDark();
         apply();
     }
 

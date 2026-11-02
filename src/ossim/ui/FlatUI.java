@@ -189,7 +189,7 @@ public final class FlatUI {
             b.setContentAreaFilled(false);
             b.setBorder(BorderFactory.createEmptyBorder());
             b.setFocusable(false);
-            b.setIcon(Icons.of(Icons.Kind.CHEVRON_DOWN, 12, null));
+            b.setIcon(Icons.of(Icons.Kind.CHEVRON_DOWN, 12, Theme.Role.TEXT_MUTED));
             return b;
         }
 

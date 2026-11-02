@@ -85,6 +85,9 @@ abstract class ModulePanel extends JPanel {
         descriptionArea = wrapping(description);
         titles.add(descriptionArea, BorderLayout.CENTER);
         header.add(titles, BorderLayout.CENTER);
+        JPanel headerRight = Ui.clear(new BorderLayout());
+        headerRight.add(Ui.themeButton(), BorderLayout.NORTH);
+        header.add(headerRight, BorderLayout.EAST);
 
         JPanel north = Ui.clear(new BorderLayout(0, 10));
         north.add(header, BorderLayout.NORTH);

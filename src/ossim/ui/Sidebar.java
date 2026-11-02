@@ -219,7 +219,7 @@ final class Sidebar extends JPanel {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = FlatUI.smooth(g);
             if (compact(this)) {
-                g2.setColor(new Color(0x2A3444));
+                g2.setColor(new Color(0x3A434B));
                 g2.fillRect(10, 5, getWidth() - 20, 1);
             } else {
                 g2.setFont(Theme.SMALL_BOLD);
@@ -249,7 +249,7 @@ final class Sidebar extends JPanel {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = FlatUI.smooth(g);
             int x = compact(this) ? (getWidth() - 36) / 2 : 8;
-            g2.setPaint(new java.awt.GradientPaint(x, 4, new Color(0x3B82F6), x + 36, 40, new Color(0x8B5CF6)));
+            g2.setPaint(new java.awt.GradientPaint(x, 4, new Color(0xE36A53), x + 36, 40, new Color(0xF47A66)));
             g2.fillRoundRect(x, 4, 36, 36, 11, 11);
             Icons.paint(g2, Icons.Kind.CPU, x + 8, 12, 20, Color.WHITE);
             if (compact(this)) {

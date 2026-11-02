@@ -37,7 +37,10 @@ final class HomePanel extends JPanel implements Scrollable {
         setBorder(BorderFactory.createEmptyBorder(28, 32, 32, 32));
 
         JPanel hero = Ui.clear(new BorderLayout(0, 6));
-        hero.add(Ui.text("Mini Operating System Simulator", Theme.H1.deriveFont(26f), Theme.Role.TEXT), BorderLayout.NORTH);
+        JPanel titleRow = Ui.clear(new BorderLayout(12, 0));
+        titleRow.add(Ui.text("Mini Operating System Simulator", Theme.H1.deriveFont(26f), Theme.Role.TEXT), BorderLayout.CENTER);
+        titleRow.add(appearanceSwitch(), BorderLayout.EAST);
+        hero.add(titleRow, BorderLayout.NORTH);
         hero.add(ModulePanel.wrapping("Eight core OS concepts, each with real calculations, step-by-step traces, charts and a "
                 + "side-by-side comparison of every algorithm. Enter as many items as you like: the only limit is your "
                 + "computer's memory."), BorderLayout.CENTER);
@@ -61,6 +64,22 @@ final class HomePanel extends JPanel implements Scrollable {
         add(top, BorderLayout.NORTH);
         add(gridWrap, BorderLayout.CENTER);
         add(layoutGuide(), BorderLayout.SOUTH);
+    }
+
+    /** "Light | Dark" switch on the overview, kept in sync with the sidebar item, header buttons and Ctrl+D. */
+    private static JComponent appearanceSwitch() {
+        Segmented sw = new Segmented(List.of("Light", "Dark"), index -> {
+            if ((index == 1) != Theme.isDark()) {
+                Theme.requestToggle();
+            }
+        });
+        sw.setPreferredSize(new Dimension(180, 36));
+        sw.setToolTipText("Appearance (Ctrl+D)");
+        sw.select(Theme.isDark() ? 1 : 0);
+        Theme.onChange(() -> sw.select(Theme.isDark() ? 1 : 0));
+        JPanel wrap = Ui.clear(new BorderLayout());
+        wrap.add(sw, BorderLayout.NORTH);
+        return wrap;
     }
 
     private static JComponent step(String number, String title, String text) {

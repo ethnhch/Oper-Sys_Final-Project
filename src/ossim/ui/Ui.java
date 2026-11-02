@@ -41,7 +41,7 @@ final class Ui {
     enum Variant { PRIMARY, SECONDARY, GHOST }
 
     /** Rounded button in one of three emphasis levels; hover and press states are painted, not images. */
-    static final class Btn extends JButton {
+    static class Btn extends JButton {
         private final Variant variant;
 
         Btn(String text, Icons.Kind icon, Variant variant) {
@@ -119,6 +119,37 @@ final class Ui {
     static JButton button(String text, Icons.Kind icon, Variant variant, Runnable action) {
         Btn b = new Btn(text, icon, variant);
         b.addActionListener(e -> action.run());
+        return b;
+    }
+
+    /** Sun / moon button that switches between light and dark mode; the icon shows the mode you will get. */
+    static JButton themeButton() {
+        Btn b = new Btn("", null, Variant.GHOST) {
+            @Override
+            public String getToolTipText() {
+                return Theme.isDark() ? "Switch to light mode (Ctrl+D)" : "Switch to dark mode (Ctrl+D)";
+            }
+        };
+        b.setIcon(new Icon() {
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Icons.paint((Graphics2D) g, Theme.isDark() ? Icons.Kind.SUN : Icons.Kind.MOON, x, y, 18,
+                        Theme.c(Theme.Role.TEXT_MUTED));
+            }
+
+            @Override
+            public int getIconWidth() {
+                return 18;
+            }
+
+            @Override
+            public int getIconHeight() {
+                return 18;
+            }
+        });
+        b.setToolTipText("Switch theme");
+        b.setBorder(BorderFactory.createEmptyBorder(9, 9, 9, 9));
+        b.addActionListener(e -> Theme.requestToggle());
         return b;
     }
 
