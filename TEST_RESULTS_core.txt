@@ -1,0 +1,126 @@
+PASS  CPU FCFS avg waiting = 17
+PASS  CPU SJF avg waiting = 3
+PASS  CPU RR q=4 avg waiting = 17/3
+PASS  CPU SRTF avg waiting = 6.5
+PASS  CPU Priority avg waiting = 7.75
+PASS  CPU Priority-P completes P2 at 5
+PASS  CPU idle gap appears in Gantt
+PASS  CPU single process
+PASS  CPU burst 0 rejected
+PASS  CPU duplicate id rejected
+PASS  CPU quantum 0 rejected
+PASS  CPU empty rejected
+PASS  CPU time overflow rejected
+PASS  Banker safe
+PASS  Banker sequence
+PASS  Banker need P0
+PASS  Banker P1 request (1,0,2) granted
+PASS  Banker P4 request (3,3,0) must wait
+PASS  Banker P0 request (0,2,0) unsafe
+PASS  Banker unsafe state
+PASS  Banker Allocation > Max rejected
+PASS  Banker negative available rejected
+PASS  Banker mismatched process rows rejected
+PASS  Banker mismatched resource columns rejected
+PASS  Banker work accumulator avoids overflow
+PASS  Paging 100 -> 5220
+PASS  Paging 1500 -> 2*1024+476
+PASS  Paging unmapped page faults
+PASS  Paging boundary 1023 -> 5*1024+1023
+PASS  Paging frame out of range rejected
+PASS  Paging duplicate frame rejected
+PASS  Paging negative logical address rejected
+PASS  Paging negative frame rejected
+PASS  PR FIFO faults = 15
+PASS  PR LRU faults = 12
+PASS  PR OPT faults = 9
+PASS  PR Belady FIFO 3 frames = 9
+PASS  PR Belady FIFO 4 frames = 10
+PASS  PR 1 frame, alternating = all faults
+PASS  PR frames > distinct pages = distinct faults
+PASS  PR Clock faults (textbook string) = 14
+PASS  PR zero frames rejected
+PASS  PR negative page rejected
+PASS  Seg (2,53) -> 4353
+PASS  Seg (3,852) -> 4052
+PASS  Seg offset beyond limit is error
+PASS  Seg undefined segment is error
+PASS  Seg offset = limit-1 valid
+PASS  Seg offset = limit invalid
+PASS  Seg overlap detected
+PASS  Seg duplicate id rejected
+PASS  Seg negative offset rejected
+PASS  Seg negative base rejected
+PASS  Frag best fit places every process
+PASS  Frag best fit internal = 88+83+88+174
+PASS  Frag first fit leaves P4 unplaced
+PASS  Frag dynamic detects external fragmentation
+PASS  Frag dynamic internal = 0
+PASS  Frag fixed partitions do not mislabel failures as external fragmentation
+PASS  Frag worst fit P1 -> block 4 (600)
+PASS  Frag next fit continues after last block
+PASS  Frag empty blocks rejected
+PASS  Frag negative block size rejected
+PASS  Frag duplicate process IDs rejected
+PASS  Frag total-free accumulator avoids overflow
+PASS  Disk FCFS head movement = 640
+PASS  Disk FCFS serves every request
+PASS  Disk SSTF head movement = 236
+PASS  Disk SSTF serves every request
+PASS  Disk SCAN head movement = 331
+PASS  Disk SCAN serves every request
+PASS  Disk C-SCAN head movement = 382
+PASS  Disk C-SCAN serves every request
+PASS  Disk LOOK head movement = 299
+PASS  Disk LOOK serves every request
+PASS  Disk C-LOOK head movement = 322
+PASS  Disk C-LOOK serves every request
+PASS  Disk C-SCAN without return jump = 183
+PASS  Disk SCAN down (53->0->183) = 236
+PASS  Disk head on request
+PASS  Disk request beyond limit rejected
+PASS  Disk head beyond limit rejected
+PASS  Disk null direction rejected for SCAN
+PASS  Disk cumulative movement uses long arithmetic
+PASS  Multi: J3 cannot be admitted at t=0 (70+50>100)
+PASS  Multi: max degree = 2
+PASS  Multi: CPU utilization 100% (no gaps)
+PASS  Multi: finish = total burst
+PASS  Multi: admission is recorded at the actual dispatch boundary
+PASS  Multi: job larger than memory rejected
+PASS  Multi: blank program ID rejected
+PASS  Multi: negative arrival rejected
+PASS  Multi: zero memory rejected
+PASS  Multi: zero burst rejected
+PASS  Multi: time overflow rejected
+PASS  Large CPU FCFS (5000 procs): executed time = total burst
+PASS  Large CPU SJF (non-preemptive) (5000 procs): executed time = total burst
+PASS  Large CPU SRTF (preemptive SJF) (5000 procs): executed time = total burst
+PASS  Large CPU Priority (non-preemptive) (5000 procs): executed time = total burst
+PASS  Large CPU Priority (preemptive) (5000 procs): executed time = total burst
+PASS  Large CPU Round Robin (5000 procs): executed time = total burst
+PASS  Large CPU: SJF waits <= FCFS waits
+PASS  Large Banker (300x8) is safe with ample resources
+PASS  Large Banker sequence has every process once
+PASS  Large PR (20000 refs): OPT <= LRU
+PASS  Large PR (20000 refs): OPT <= FIFO
+PASS  Large Disk FCFS (20000 requests) serves all
+PASS  Large Disk SSTF (20000 requests) serves all
+PASS  Large Disk SCAN (20000 requests) serves all
+PASS  Large Disk C-SCAN (20000 requests) serves all
+PASS  Large Disk LOOK (20000 requests) serves all
+PASS  Large Disk C-LOOK (20000 requests) serves all
+PASS  Large Disk: SSTF <= FCFS
+PASS  Large Frag First Fit/Fixed partitions (2000x2000) keeps every process accounted for
+PASS  Large Frag First Fit/Dynamic (split) partitions (2000x2000) keeps every process accounted for
+PASS  Large Frag Best Fit/Fixed partitions (2000x2000) keeps every process accounted for
+PASS  Large Frag Best Fit/Dynamic (split) partitions (2000x2000) keeps every process accounted for
+PASS  Large Frag Worst Fit/Fixed partitions (2000x2000) keeps every process accounted for
+PASS  Large Frag Worst Fit/Dynamic (split) partitions (2000x2000) keeps every process accounted for
+PASS  Large Frag Next Fit/Fixed partitions (2000x2000) keeps every process accounted for
+PASS  Large Frag Next Fit/Dynamic (split) partitions (2000x2000) keeps every process accounted for
+PASS  Large Multi (1000 jobs): all complete
+PASS  Large Multi: utilization <= 100%
+PASS  Large Paging: 20000 translations
+
+Passed: 124   Failed: 0

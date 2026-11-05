@@ -35,8 +35,8 @@ final class OutputPane extends Card {
         summary.setWrapStyleWord(true);
         summary.setBackground(Theme.INSET);
         summary.setForeground(Theme.TEXT);
-        summary.setSelectionColor(Theme.CORAL);
-        summary.setSelectedTextColor(Theme.ON_CORAL);
+        summary.setSelectionColor(Theme.NEON);
+        summary.setSelectedTextColor(Theme.ON_NEON);
         summary.setBorder(Theme.padding(10, 12, 10, 12));
         var summaryScroll = Ui.scroll(summary);
         summaryScroll.setPreferredSize(new Dimension(300, 150));
@@ -63,6 +63,18 @@ final class OutputPane extends Card {
         tabs.removeAll();
         summary.setText("");
         states.show(body, "results");
+    }
+
+    /** True while at least one result tab is shown (used by the GUI tests). */
+    boolean hasResults() {
+        return tabs.getTabCount() > 0;
+    }
+
+    /** Back to the "No results yet" screen; used when the input is cleared so old results never stay on screen. */
+    void showEmpty() {
+        tabs.removeAll();
+        summary.setText("");
+        states.show(body, "empty");
     }
 
     void setSummary(String text) {
@@ -100,7 +112,7 @@ final class OutputPane extends Card {
             Runnable refresh = () -> text.setText("<html><div style='text-align:center'>"
                     + "<span style='font-size:13px;color:" + Theme.hex(Theme.TEXT) + "'><b>No results yet</b></span><br><br>"
                     + "<span style='color:" + Theme.hex(Theme.TEXT_MUTED) + "'>Enter your data or press <b>Load Sample</b>,"
-                    + "<br>then press <span style='color:" + Theme.hex(Theme.CORAL_LIGHT) + "'><b>Run</b></span> (Ctrl+Enter)."
+                    + "<br>then press <span style='color:" + Theme.hex(Theme.NEON_LIGHT) + "'><b>Run</b></span> (Ctrl+Enter)."
                     + "</span></div></html>");
             refresh.run();
             Theme.onChange(refresh);
@@ -117,7 +129,7 @@ final class OutputPane extends Card {
             int cy = getHeight() / 2 - 44;
             g2.setColor(Theme.SURFACE_2);
             g2.fillRoundRect(cx - 34, cy - 26, 68, 52, 14, 14);
-            g2.setColor(Theme.CORAL);
+            g2.setColor(Theme.NEON);
             int[] bars = {18, 30, 12, 24};
             for (int i = 0; i < bars.length; i++) {
                 g2.fillRoundRect(cx - 22 + i * 12, cy + 16 - bars[i], 8, bars[i], 3, 3);

@@ -9,7 +9,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
-/** Thin, flat scrollbar: no arrow buttons, rounded charcoal thumb that turns coral while dragged. */
+/** Thin, flat scrollbar: no arrow buttons, rounded charcoal thumb that turns neon while dragged. */
 public final class ThemeScrollBarUI extends BasicScrollBarUI {
 
     /** Factory called by {@link javax.swing.UIManager} (registered in {@link Theme#install}). */
@@ -54,7 +54,7 @@ public final class ThemeScrollBarUI extends BasicScrollBarUI {
             return;
         }
         Graphics2D g2 = Theme.smooth(g);
-        g2.setColor(isDragging ? Theme.CORAL : isThumbRollover() ? Theme.TEXT_FAINT : Theme.LINE);
+        g2.setColor(isDragging ? Theme.NEON : isThumbRollover() ? Theme.TEXT_FAINT : Theme.LINE);
         int inset = 2;
         int arc = Math.min(r.width, r.height) - 2 * inset;
         g2.fillRoundRect(r.x + inset, r.y + inset, r.width - 2 * inset, r.height - 2 * inset, arc, arc);

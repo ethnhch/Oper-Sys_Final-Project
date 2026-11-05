@@ -45,9 +45,9 @@ final class ThemeFields {
         field.setOpaque(true);
         field.setBackground(Theme.INSET);
         field.setForeground(Theme.TEXT);
-        field.setCaretColor(Theme.CORAL_LIGHT);
-        field.setSelectionColor(Theme.CORAL);
-        field.setSelectedTextColor(Theme.ON_CORAL);
+        field.setCaretColor(Theme.NEON_LIGHT);
+        field.setSelectionColor(Theme.NEON);
+        field.setSelectedTextColor(Theme.ON_NEON);
         field.setFont(Theme.BODY);
         field.setBorder(new FieldBorder(field));
         field.addFocusListener(new FocusAdapter() {
@@ -83,8 +83,8 @@ final class ThemeFields {
                 setBorder(Theme.padding(5, 8, 5, 8));
                 setFont(Theme.BODY);
                 setOpaque(index >= 0);
-                setBackground(selected ? Theme.CORAL : Theme.SURFACE_2);
-                setForeground(selected && index >= 0 ? Theme.ON_CORAL : Theme.TEXT);
+                setBackground(selected ? Theme.NEON : Theme.SURFACE_2);
+                setForeground(selected && index >= 0 ? Theme.ON_NEON : Theme.TEXT);
                 return this;
             }
         });
@@ -113,7 +113,7 @@ final class ThemeFields {
         box.setIcon(new CheckIcon());
     }
 
-    /** Rounded inset field; the outline turns coral while focused. */
+    /** Rounded inset field; the outline turns neon while focused. */
     private static final class FieldBorder extends javax.swing.border.AbstractBorder {
         private final JComponent owner;
 
@@ -130,7 +130,7 @@ final class ThemeFields {
             g2.setColor(Theme.CHARCOAL);
             g2.fill(corners);
             boolean focused = owner.isFocusOwner() || owner instanceof JComboBox<?> cb && cb.isPopupVisible();
-            g2.setColor(focused ? Theme.CORAL : Theme.LINE);
+            g2.setColor(focused ? Theme.NEON : Theme.LINE);
             g2.setStroke(new BasicStroke(focused ? 1.5f : 1f));
             g2.drawRoundRect(x, y, w - 1, h - 1, 10, 10);
             g2.dispose();
@@ -148,7 +148,7 @@ final class ThemeFields {
         }
     }
 
-    /** Flat drop-down: chevron arrow, charcoal popup list with coral selection. */
+    /** Flat drop-down: chevron arrow, charcoal popup list with neon selection. */
     private static final class ComboUI extends BasicComboBoxUI {
         @Override
         protected JButton createArrowButton() {
@@ -156,7 +156,7 @@ final class ThemeFields {
                 @Override
                 protected void paintComponent(Graphics g) {
                     Graphics2D g2 = Theme.smooth(g);
-                    g2.setColor(comboBox.isPopupVisible() ? Theme.CORAL_LIGHT : Theme.TEXT_MUTED);
+                    g2.setColor(comboBox.isPopupVisible() ? Theme.NEON_LIGHT : Theme.TEXT_MUTED);
                     g2.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                     int cx = getWidth() / 2;
                     int cy = getHeight() / 2;
@@ -198,24 +198,24 @@ final class ThemeFields {
             BasicComboPopup popup = new BasicComboPopup(comboBox);
             popup.setBorder(Theme.hairline(1, 1, 1, 1, false));
             popup.getList().setBackground(Theme.SURFACE_2);
-            popup.getList().setSelectionBackground(Theme.CORAL);
-            popup.getList().setSelectionForeground(Theme.ON_CORAL);
+            popup.getList().setSelectionBackground(Theme.NEON);
+            popup.getList().setSelectionForeground(Theme.ON_NEON);
             return popup;
         }
     }
 
-    /** Rounded check box drawn in the palette (coral when checked). */
+    /** Rounded check box drawn in the palette (neon when checked). */
     private static final class CheckIcon implements Icon {
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
             boolean on = c instanceof AbstractButton b && b.isSelected();
             Graphics2D g2 = Theme.smooth(g);
-            g2.setColor(on ? Theme.CORAL : Theme.INSET);
+            g2.setColor(on ? Theme.NEON : Theme.INSET);
             g2.fillRoundRect(x, y, 16, 16, 5, 5);
-            g2.setColor(on ? Theme.CORAL : Theme.LINE);
+            g2.setColor(on ? Theme.NEON : Theme.LINE);
             g2.drawRoundRect(x, y, 15, 15, 5, 5);
             if (on) {
-                g2.setColor(Theme.ON_CORAL);
+                g2.setColor(Theme.ON_NEON);
                 g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                 g2.drawPolyline(new int[]{x + 4, x + 7, x + 12}, new int[]{y + 8, y + 11, y + 5}, 3);
             }

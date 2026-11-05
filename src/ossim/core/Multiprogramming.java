@@ -43,13 +43,33 @@ public final class Multiprogramming {
             throw new InputException("Total memory and time quantum must be at least 1.");
         }
         Set<String> ids = new HashSet<>();
-        for (Job j : jobs) {
+        long totalBurst = 0;
+        int latestArrival = 0;
+        for (int i = 0; i < jobs.size(); i++) {
+            Job j = jobs.get(i);
+            if (j.id() == null || j.id().isBlank()) {
+                throw new InputException("Program row " + (i + 1) + ": program ID must not be blank.");
+            }
             if (!ids.add(j.id())) {
                 throw new InputException("Duplicate program ID: " + j.id());
+            }
+            if (j.arrival() < 0) {
+                throw new InputException(j.id() + ": arrival time cannot be negative.");
+            }
+            if (j.memory() < 1) {
+                throw new InputException(j.id() + ": memory requirement must be at least 1.");
+            }
+            if (j.burst() < 1) {
+                throw new InputException(j.id() + ": CPU burst must be at least 1.");
             }
             if (j.memory() > totalMemory) {
                 throw new InputException(j.id() + " needs " + j.memory() + " memory, which exceeds total memory " + totalMemory + ".");
             }
+            totalBurst += j.burst();
+            latestArrival = Math.max(latestArrival, j.arrival());
+        }
+        if ((long) latestArrival + totalBurst > Integer.MAX_VALUE) {
+            throw new InputException("Combined arrival and CPU burst times exceed the simulator's supported time range.");
         }
     }
 
@@ -66,7 +86,6 @@ public final class Multiprogramming {
         final List<Snapshot> timeline = new ArrayList<>();
         int memoryUsed;
         int maxDegree;
-        int lastRelease;   // last instant at which memory was freed
 
         Simulation(List<Job> jobs, int totalMemory, int quantum) {
             this.jobs = jobs;
@@ -107,7 +126,6 @@ public final class Multiprogramming {
                 if (remaining[current] == 0) {
                     memoryUsed -= jobs.get(current).memory();
                     completion[current] = time;
-                    lastRelease = time;
                     finished++;
                 }
                 admit(time);
@@ -120,7 +138,7 @@ public final class Multiprogramming {
 
         /**
          * FCFS admission: the head of the job queue blocks later jobs if it does not fit.
-         * Dispatch decisions are made at quantum boundaries; the recorded admission instant is exact.
+         * Admission is reconsidered at simulation decision points (arrival/quantum/completion boundaries).
          */
         private void admit(int time) {
             while (!pending.isEmpty()) {
@@ -130,7 +148,7 @@ public final class Multiprogramming {
                     return;
                 }
                 pending.poll();
-                admitted[next] = Math.max(job.arrival(), lastRelease);   // true instant it could enter memory
+                admitted[next] = time;   // admission occurs at this simulation decision point
                 memoryUsed += job.memory();
                 ready.add(next);
             }

@@ -30,40 +30,51 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * "Charcoal &amp; Coral" design system: one place for every color, font, spacing value and shared renderer,
+ * "Neon Matrix, Cyber Light &amp; Cyber Midnight" design system: one place for every color, font, spacing value and shared renderer,
  * so all eight module screens look identical. No algorithm code lives here.
  */
 public final class Theme {
-    // ---- Palette (sampled from the Charcoal & Coral reference) -------------------------------------
+    // ---- Palette (Neon Matrix cyber interface) -------------------------------------
     /** Light or dark appearance; switchable at runtime with {@link #setMode}. */
-    public enum Mode { DARK, LIGHT }
+    public enum Mode { CYBER_GREEN, CYBER_LIGHT, CYBER_MIDNIGHT }
 
     /**
-     * Every color token with its dark and light value. Values are unique within each mode, which lets
+     * Every color token with its theme values. Values are unique within each mode, which lets
      * {@link #setMode} recolor existing components by swapping old token values for new ones.
      */
     private enum Token {
-        BG(0x1C2125, 0xF5EDE9), CHARCOAL(0x262C31, 0xFFFEFD), SURFACE_2(0x2F363C, 0xF3E7E2), INSET(0x1A1E21, 0xFBF7F5),
-        ROW_ALT(0x20252A, 0xF7F0ED), LINE(0x3A424A, 0xE2D3CC), LINE_SOFT(0x30373D, 0xEDE2DD),
-        CORAL(0xE26853, 0xD85A44), CORAL_BRIGHT(0xEE6C55, 0xD9573F), CORAL_LIGHT(0xF57A67, 0xC24E39),
-        CORAL_DEEP(0xC9563F, 0xB04532), CORAL_TINT(0x43312F, 0xFBE1DA),
-        TEXT(0xECE7E4, 0x262C31), TEXT_MUTED(0xA3A9AE, 0x5E666D), TEXT_FAINT(0x6E767D, 0x8F979D),
-        ON_CORAL(0x1B2024, 0xFFFFFF), SUCCESS(0x7FCBA8, 0x2E8B63), WARNING(0xF2A65A, 0xB86A1C);
+        // Neon Matrix: near-black surfaces, electric green controls and high-contrast text.
+        BG(0x080E0B, 0xF1F7F2, 0x08121B), CHARCOAL(0x0D1712, 0xFFFFFF, 0x101F2D),
+        SURFACE_2(0x14241A, 0xE5EFE7, 0x1A3042), INSET(0x060B08, 0xFAFCFA, 0x07101A),
+        ROW_ALT(0x0B1510, 0xEDF4EE, 0x0D1B29), LINE(0x244A32, 0xD0E0D3, 0x2D5068),
+        LINE_SOFT(0x193624, 0xE0EAE2, 0x203B50),
+        NEON(0x27E879, 0x398653, 0x36D9C2), NEON_BRIGHT(0x48FF91, 0x286C43, 0x63F3DE),
+        NEON_LIGHT(0x9AFFBD, 0x245B39, 0x9AF7E9), NEON_DEEP(0x159B4C, 0x1D5935, 0x168E86),
+        NEON_TINT(0x102B1B, 0xE0F0E4, 0x123A3B),
+        TEXT(0xE6F8EC, 0x20382A, 0xE5F2FA), TEXT_MUTED(0xA1BDAA, 0x5D7564, 0xA8C0D0),
+        TEXT_FAINT(0x6D8D78, 0x819688, 0x7893A7), ON_NEON(0x041009, 0xFFFFFF, 0x061713),
+        SUCCESS(0x65E995, 0x34794B, 0x63E6B8), WARNING(0xFFC56E, 0x98601D, 0xFFC56E);
 
-        private final Color dark;
+        private final Color green;
         private final Color light;
+        private final Color midnight;
 
-        Token(int dark, int light) {
-            this.dark = new Color(dark);
+        Token(int green, int light, int midnight) {
+            this.green = new Color(green);
             this.light = new Color(light);
+            this.midnight = new Color(midnight);
         }
 
         Color of(Mode mode) {
-            return mode == Mode.DARK ? dark : light;
+            return switch (mode) {
+                case CYBER_GREEN -> green;
+                case CYBER_LIGHT -> light;
+                case CYBER_MIDNIGHT -> midnight;
+            };
         }
     }
 
-    private static Mode mode = Mode.DARK;
+    private static Mode mode = Mode.CYBER_GREEN;
     private static final List<Runnable> LISTENERS = new java.util.ArrayList<>();
 
     /** Deepest background behind the cards. */
@@ -78,26 +89,26 @@ public final class Theme {
     static Color ROW_ALT;
     static Color LINE;
     static Color LINE_SOFT;
-    /** Coral: the single accent (primary buttons, selection, headings). */
-    static Color CORAL;
-    static Color CORAL_BRIGHT;
-    /** Coral used for text accents (lighter on dark, darker on light, for contrast). */
-    static Color CORAL_LIGHT;
-    static Color CORAL_DEEP;
-    /** Coral tint over the surface, for active nav items and tabs. */
-    static Color CORAL_TINT;
+    /** Neon green: the single accent (primary buttons, selection, headings). */
+    static Color NEON;
+    static Color NEON_BRIGHT;
+    /** Neon green used for text accents (lighter on dark, darker on light, for contrast). */
+    static Color NEON_LIGHT;
+    static Color NEON_DEEP;
+    /** Neon tint over the surface, for active nav items and tabs. */
+    static Color NEON_TINT;
     static Color TEXT;
     static Color TEXT_MUTED;
     static Color TEXT_FAINT;
-    /** Text drawn on top of coral fills. */
-    static Color ON_CORAL;
+    /** Text drawn on top of neon fills. */
+    static Color ON_NEON;
     static Color SUCCESS;
     static Color WARNING;
-    /** Label color on the light series fills of the Gantt chart (same in both modes). */
+    /** Label color on the series fills of the Gantt chart (same in both modes). */
     static final Color ON_SERIES = new Color(0x1B2024);
 
     static {
-        assign(Mode.DARK);
+        assign(Mode.CYBER_GREEN);
     }
 
     private static void assign(Mode m) {
@@ -109,15 +120,15 @@ public final class Theme {
         ROW_ALT = Token.ROW_ALT.of(m);
         LINE = Token.LINE.of(m);
         LINE_SOFT = Token.LINE_SOFT.of(m);
-        CORAL = Token.CORAL.of(m);
-        CORAL_BRIGHT = Token.CORAL_BRIGHT.of(m);
-        CORAL_LIGHT = Token.CORAL_LIGHT.of(m);
-        CORAL_DEEP = Token.CORAL_DEEP.of(m);
-        CORAL_TINT = Token.CORAL_TINT.of(m);
+        NEON = Token.NEON.of(m);
+        NEON_BRIGHT = Token.NEON_BRIGHT.of(m);
+        NEON_LIGHT = Token.NEON_LIGHT.of(m);
+        NEON_DEEP = Token.NEON_DEEP.of(m);
+        NEON_TINT = Token.NEON_TINT.of(m);
         TEXT = Token.TEXT.of(m);
         TEXT_MUTED = Token.TEXT_MUTED.of(m);
         TEXT_FAINT = Token.TEXT_FAINT.of(m);
-        ON_CORAL = Token.ON_CORAL.of(m);
+        ON_NEON = Token.ON_NEON.of(m);
         SUCCESS = Token.SUCCESS.of(m);
         WARNING = Token.WARNING.of(m);
     }
@@ -163,13 +174,13 @@ public final class Theme {
         }
         polish(c);
         if (c instanceof JTable table) {
-            table.setSelectionBackground(CORAL);
-            table.setSelectionForeground(ON_CORAL);
+            table.setSelectionBackground(NEON);
+            table.setSelectionForeground(ON_NEON);
             table.setGridColor(LINE_SOFT);
         } else if (c instanceof javax.swing.text.JTextComponent text) {
-            text.setCaretColor(CORAL_LIGHT);
-            text.setSelectionColor(CORAL);
-            text.setSelectedTextColor(ON_CORAL);
+            text.setCaretColor(NEON_LIGHT);
+            text.setSelectionColor(NEON);
+            text.setSelectedTextColor(ON_NEON);
         }
         if (c instanceof java.awt.Container container) {
             for (Component child : container.getComponents()) {
@@ -206,11 +217,11 @@ public final class Theme {
         return color == null ? null : swap.get(color.getRGB());
     }
 
-    /** Distinct series colors that sit well next to coral on charcoal (Gantt slices, legends). */
+    /** Distinct series colors that sit well next to neon on charcoal (Gantt slices, legends). */
     static final List<Color> SERIES = List.of(
-            new Color(0xE26853), new Color(0xF2A65A), new Color(0x7FCBA8), new Color(0x6FA8DC),
-            new Color(0xC38FD6), new Color(0xF4D35E), new Color(0xE88AA2), new Color(0x5FC2C9),
-            new Color(0xF57A67), new Color(0xA8C66C));
+            new Color(0x739B7D), new Color(0xD2A86D), new Color(0x8BC9A0), new Color(0x78A9C8),
+            new Color(0xA6A0C8), new Color(0xD7C77A), new Color(0xC58F9D), new Color(0x69B8B5),
+            new Color(0x8DB99A), new Color(0xA8C68C));
 
     // ---- Spacing & shape ------------------------------------------------------------------------
     static final int RADIUS = 14;
@@ -219,7 +230,7 @@ public final class Theme {
 
     // ---- Responsive breakpoints (frame / panel widths in pixels) ---------------------------------
     /** Below this frame width the sidebar collapses to icon badges. */
-    static final int BP_SIDEBAR = 1180;
+    static final int BP_SIDEBAR = 1050;
     /** Below this module width inputs and results stack vertically instead of side by side. */
     static final int BP_STACK = 880;
 
@@ -250,7 +261,7 @@ public final class Theme {
     }
 
     /**
-     * Installs the Charcoal &amp; Coral palette in the given mode on top of Nimbus (bundled with every JDK, so no
+     * Installs the Neon Matrix, Cyber Light &amp; Cyber Midnight palette in the given mode on top of Nimbus (bundled with every JDK, so no
      * dependencies). Must run before any component is created.
      */
     public static void install(Mode initial) {
@@ -287,24 +298,24 @@ public final class Theme {
     private static void putDefaults() {
         put("control", CHARCOAL);
         put("info", SURFACE_2);
-        put("nimbusBase", mode == Mode.DARK ? SURFACE_2 : new Color(0x8A7F7A));
+        put("nimbusBase", mode == Mode.CYBER_GREEN ? SURFACE_2 : (mode == Mode.CYBER_LIGHT ? new Color(0x398653) : new Color(0x1A5260)));
         put("nimbusBlueGrey", LINE);
-        put("nimbusFocus", CORAL);
+        put("nimbusFocus", NEON);
         put("nimbusLightBackground", INSET);
-        put("nimbusSelectionBackground", CORAL);
-        put("nimbusSelectedText", ON_CORAL);
-        put("nimbusSelection", CORAL);
-        put("nimbusOrange", CORAL);
+        put("nimbusSelectionBackground", NEON);
+        put("nimbusSelectedText", ON_NEON);
+        put("nimbusSelection", NEON);
+        put("nimbusOrange", NEON);
         put("nimbusGreen", SUCCESS);
-        put("nimbusRed", CORAL_DEEP);
+        put("nimbusRed", NEON_DEEP);
         put("nimbusInfoBlue", new Color(0x6FA8DC));
         put("nimbusDisabledText", TEXT_FAINT);
         put("nimbusBorder", LINE);
         put("text", TEXT);
         put("textForeground", TEXT);
-        put("textBackground", CORAL);
-        put("textHighlight", CORAL);
-        put("textHighlightText", ON_CORAL);
+        put("textBackground", NEON);
+        put("textHighlight", NEON);
+        put("textHighlightText", ON_NEON);
         put("menuText", TEXT);
         put("infoText", TEXT);
         put("controlText", TEXT);
@@ -389,8 +400,8 @@ public final class Theme {
         table.setIntercellSpacing(new Dimension(0, 1));
         table.setBackground(INSET);
         table.setForeground(TEXT);
-        table.setSelectionBackground(CORAL);
-        table.setSelectionForeground(ON_CORAL);
+        table.setSelectionBackground(NEON);
+        table.setSelectionForeground(ON_NEON);
         table.setFillsViewportHeight(true);
         table.setDefaultRenderer(Object.class, new CellRenderer());
         table.getTableHeader().setDefaultRenderer(new HeaderRenderer());
@@ -399,7 +410,7 @@ public final class Theme {
         table.getTableHeader().setPreferredSize(new Dimension(0, ROW_HEIGHT + 4));
     }
 
-    /** Text cells: zebra rows, numbers right-aligned, status words colored (fault/error in coral, hit/ok in green). */
+    /** Text cells: zebra rows, numbers right-aligned, status words colored (fault/error in neon, hit/ok in green). */
     private static final class CellRenderer extends DefaultTableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focus,
@@ -414,8 +425,8 @@ public final class Theme {
             setToolTipText(getFontMetrics(BODY_BOLD).stringWidth(text) + 20
                     > table.getColumnModel().getColumn(column).getWidth() ? text : null);
             if (selected) {
-                setBackground(CORAL);
-                setForeground(ON_CORAL);
+                setBackground(NEON);
+                setForeground(ON_NEON);
                 return this;
             }
             setBackground(row % 2 == 0 ? INSET : ROW_ALT);
@@ -433,7 +444,7 @@ public final class Theme {
         String t = text.toUpperCase(Locale.ROOT);
         if (t.contains("FAULT") || t.startsWith("ERROR") || t.contains("EXTERNAL") || t.startsWith("NOT ")
                 || t.contains("BLOCKED") || t.contains("UNSAFE") || t.startsWith("DENIED")) {
-            return CORAL_LIGHT;
+            return NEON_LIGHT;
         }
         if (t.equals("HIT") || t.equals("OK") || t.equals("ALLOCATED") || t.equals("SAFE") || t.startsWith("GRANTED")) {
             return SUCCESS;
@@ -444,7 +455,7 @@ public final class Theme {
         return null;
     }
 
-    /** Column headers: raised charcoal, coral caption, sort direction arrow. */
+    /** Column headers: raised charcoal, neon caption, sort direction arrow. */
     private static final class HeaderRenderer extends DefaultTableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focus,
@@ -457,7 +468,7 @@ public final class Theme {
             }
             super.getTableCellRendererComponent(table, text, false, false, row, column);
             setFont(SMALL_BOLD);
-            setForeground(CORAL_LIGHT);
+            setForeground(NEON_LIGHT);
             setBackground(SURFACE_2);
             setOpaque(true);
             setHorizontalAlignment(SwingConstants.LEFT);

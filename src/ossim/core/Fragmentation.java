@@ -50,13 +50,34 @@ public final class Fragmentation {
     public record BlockState(int index, int size, List<String> residents, int used, int free) { }
 
     public record Result(Strategy strategy, Mode mode, List<Allocation> allocations, List<BlockState> blocks,
-                         int internalFragmentation, int totalFree, int largestHole, int externalFailures) { }
+                         long internalFragmentation, long totalFree, int largestHole, int externalFailures) { }
 
     private Fragmentation() { }
 
     public static Result run(Strategy strategy, Mode mode, List<Integer> blockSizes, List<Request> requests) {
-        if (blockSizes.isEmpty() || requests.isEmpty()) {
+        if (strategy == null || mode == null) {
+            throw new InputException("Choose an allocation strategy and partitioning mode.");
+        }
+        if (blockSizes == null || requests == null || blockSizes.isEmpty() || requests.isEmpty()) {
             throw new InputException("Enter at least one memory block and one process.");
+        }
+        for (int i = 0; i < blockSizes.size(); i++) {
+            if (blockSizes.get(i) == null || blockSizes.get(i) < 1) {
+                throw new InputException("Memory block " + (i + 1) + " size must be at least 1.");
+            }
+        }
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        for (int i = 0; i < requests.size(); i++) {
+            Request request = requests.get(i);
+            if (request == null || request.id() == null || request.id().isBlank()) {
+                throw new InputException("Process " + (i + 1) + " must have a name.");
+            }
+            if (!ids.add(request.id())) {
+                throw new InputException("Duplicate process name: " + request.id());
+            }
+            if (request.size() < 1) {
+                throw new InputException(request.id() + " size must be at least 1.");
+            }
         }
         int[] size = blockSizes.stream().mapToInt(Integer::intValue).toArray();
         int[] free = size.clone();
@@ -67,18 +88,20 @@ public final class Fragmentation {
         }
 
         List<Allocation> allocations = new ArrayList<>();
-        int internal = 0;
+        long internal = 0;
         int externalFailures = 0;
         int last = 0;
         for (Request req : requests) {
             int block = choose(strategy, free, req.size(), last);
             if (block < 0) {
-                int totalFree = sum(free);
-                boolean external = totalFree >= req.size();
+                long totalFree = sum(free);
+                boolean external = mode == Mode.DYNAMIC && totalFree >= req.size();
                 externalFailures += external ? 1 : 0;
                 String why = external
                         ? "EXTERNAL fragmentation: " + totalFree + " free in total, but no single hole >= " + req.size()
-                        : "Not enough free memory (" + totalFree + " free)";
+                        : mode == Mode.FIXED
+                                ? "No free fixed partition is large enough (" + totalFree + " total free)"
+                                : "Not enough free memory (" + totalFree + " free)";
                 allocations.add(new Allocation(req, -1, 0, why));
                 continue;
             }
@@ -143,8 +166,8 @@ public final class Fragmentation {
         return chosen;
     }
 
-    private static int sum(int[] values) {
-        int total = 0;
+    private static long sum(int[] values) {
+        long total = 0;
         for (int v : values) {
             total += v;
         }
