@@ -23,9 +23,15 @@ public final class Paging {
         if (pageSize < 1 || totalFrames < 1) {
             throw new InputException("Page size and number of frames must be at least 1.");
         }
+        if (pageTable == null || addresses == null) {
+            throw new InputException("Page table and logical address list are required.");
+        }
         Map<Integer, Integer> map = new HashMap<>();
         Set<Integer> usedFrames = new HashSet<>();
         for (Entry e : pageTable) {
+            if (e == null || e.page() < 0 || e.frame() < 0) {
+                throw new InputException("Page and frame numbers cannot be negative.");
+            }
             if (e.frame() >= totalFrames) {
                 throw new InputException("Page " + e.page() + " maps to frame " + e.frame()
                         + ", but physical memory only has frames 0.." + (totalFrames - 1) + ".");
@@ -39,6 +45,9 @@ public final class Paging {
         }
         List<Translation> out = new ArrayList<>(addresses.size());
         for (long address : addresses) {
+            if (address < 0) {
+                throw new InputException("Logical addresses cannot be negative: " + address + ".");
+            }
             long page = address / pageSize;
             long offset = address % pageSize;
             String split = address + " = " + page + " x " + pageSize + " + " + offset;

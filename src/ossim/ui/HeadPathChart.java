@@ -14,7 +14,7 @@ import java.awt.Stroke;
 import java.util.List;
 
 /**
- * Head path: cylinders on the horizontal axis, time (movement order) flowing downward. Served moves are coral,
+ * Head path: cylinders on the horizontal axis, time (movement order) flowing downward. Served moves are neon,
  * return jumps are dashed amber. The chart always fits the available width (responsive) and scrolls vertically.
  */
 final class HeadPathChart extends JPanel implements Scrollable {
@@ -68,7 +68,7 @@ final class HeadPathChart extends JPanel implements Scrollable {
             int toY = fromY + ROW;
             boolean jump = move.kind() == DiskScheduler.Kind.JUMP;
             g2.setStroke(jump ? dashed : solid);
-            g2.setColor(jump ? Theme.WARNING : Theme.CORAL);
+            g2.setColor(jump ? Theme.WARNING : Theme.NEON);
             g2.drawLine(fromX, fromY, toX, toY);
             fromX = toX;
             fromY = toY;
@@ -89,7 +89,7 @@ final class HeadPathChart extends JPanel implements Scrollable {
             return;
         }
         g2.setStroke(new BasicStroke(2f));
-        g2.setColor(Theme.CORAL);
+        g2.setColor(Theme.NEON);
         g2.drawLine(x, 10, x + 18, 10);
         g2.setColor(Theme.TEXT_MUTED);
         g2.drawString("head movement", x + 24, 14);
@@ -102,13 +102,13 @@ final class HeadPathChart extends JPanel implements Scrollable {
 
     private static void dot(Graphics2D g2, FontMetrics fm, int x, int y, String label, boolean showLabel, boolean start) {
         g2.setStroke(new BasicStroke(1.5f));
-        g2.setColor(start ? Theme.CORAL_LIGHT : Theme.TEXT);
+        g2.setColor(start ? Theme.NEON_LIGHT : Theme.TEXT);
         int r = start ? 5 : 3;
         g2.fillOval(x - r, y - r, 2 * r, 2 * r);
         g2.setColor(Theme.INSET);
         g2.drawOval(x - r, y - r, 2 * r, 2 * r);
         if (showLabel) {
-            g2.setColor(start ? Theme.CORAL_LIGHT : Theme.TEXT_MUTED);
+            g2.setColor(start ? Theme.NEON_LIGHT : Theme.TEXT_MUTED);
             g2.drawString(label, x + 8, y + fm.getAscent() / 2 - 1);
         }
     }

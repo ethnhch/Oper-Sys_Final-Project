@@ -78,8 +78,10 @@ public final class CpuScheduler {
             throw new InputException("Time quantum must be at least 1.");
         }
         Set<String> ids = new HashSet<>();
+        long totalBurst = 0;
+        int latestArrival = 0;
         for (Proc p : procs) {
-            if (p.id().isBlank()) {
+            if (p.id() == null || p.id().isBlank()) {
                 throw new InputException("Process ID must not be blank.");
             }
             if (!ids.add(p.id())) {
@@ -91,6 +93,14 @@ public final class CpuScheduler {
             if (p.burst() < 1) {
                 throw new InputException(p.id() + ": burst time must be at least 1.");
             }
+            if (p.priority() < 0) {
+                throw new InputException(p.id() + ": priority cannot be negative.");
+            }
+            totalBurst += p.burst();
+            latestArrival = Math.max(latestArrival, p.arrival());
+        }
+        if ((long) latestArrival + totalBurst > Integer.MAX_VALUE) {
+            throw new InputException("Combined arrival and CPU burst times exceed the simulator's supported time range.");
         }
     }
 

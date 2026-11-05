@@ -9,7 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Rectangle;
 
-/** Result tabs as flat "pills": muted labels, the active tab filled with a coral tint and a coral underline. */
+/** Result tabs as flat "pills": muted labels, the active tab filled with a neon tint and a neon underline. */
 final class ThemeTabsUI extends BasicTabbedPaneUI {
 
     @Override
@@ -23,7 +23,7 @@ final class ThemeTabsUI extends BasicTabbedPaneUI {
         lightHighlight = Theme.LINE;
         shadow = Theme.LINE;
         darkShadow = Theme.LINE;
-        focus = Theme.CORAL;
+        focus = Theme.NEON;
         textIconGap = 4;
         tabRunOverlay = 0;
         tabInsets = new Insets(7, 14, 7, 14);
@@ -41,7 +41,7 @@ final class ThemeTabsUI extends BasicTabbedPaneUI {
                 Graphics2D g2 = Theme.smooth(g);
                 g2.setColor(Theme.CHARCOAL);
                 g2.fillRect(0, 0, getWidth(), getHeight());
-                g2.setColor(isEnabled() ? (getModel().isRollover() ? Theme.CORAL_LIGHT : Theme.TEXT_MUTED) : Theme.LINE);
+                g2.setColor(isEnabled() ? (getModel().isRollover() ? Theme.NEON_LIGHT : Theme.TEXT_MUTED) : Theme.LINE);
                 g2.setStroke(new java.awt.BasicStroke(1.8f, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
                 int cx = getWidth() / 2;
                 int cy = getHeight() / 2;
@@ -66,9 +66,9 @@ final class ThemeTabsUI extends BasicTabbedPaneUI {
     protected void paintTabBackground(Graphics g, int placement, int index, int x, int y, int w, int h, boolean selected) {
         Graphics2D g2 = Theme.smooth(g);
         if (selected) {
-            g2.setColor(Theme.CORAL_TINT);
+            g2.setColor(Theme.NEON_TINT);
             g2.fillRoundRect(x + 2, y + 2, w - 4, h - 4, 10, 10);
-            g2.setColor(Theme.CORAL);
+            g2.setColor(Theme.NEON);
             g2.fillRoundRect(x + 10, y + h - 3, w - 20, 3, 3, 3);
         } else if (index == getRolloverTab()) {
             g2.setColor(Theme.SURFACE_2);
@@ -82,7 +82,7 @@ final class ThemeTabsUI extends BasicTabbedPaneUI {
                              Rectangle textRect, boolean selected) {
         Graphics2D g2 = Theme.smooth(g);
         g2.setFont(font);
-        g2.setColor(selected ? Theme.CORAL_LIGHT : index == getRolloverTab() ? Theme.TEXT : Theme.TEXT_MUTED);
+        g2.setColor(selected ? Theme.NEON_LIGHT : index == getRolloverTab() ? Theme.TEXT : Theme.TEXT_MUTED);
         g2.drawString(title, textRect.x, textRect.y + metrics.getAscent());
         g2.dispose();
     }
@@ -95,7 +95,7 @@ final class ThemeTabsUI extends BasicTabbedPaneUI {
     @Override
     protected void paintFocusIndicator(Graphics g, int placement, Rectangle[] rects, int index, Rectangle iconRect,
                                        Rectangle textRect, boolean selected) {
-        // the coral underline already marks the active tab
+        // the neon underline already marks the active tab
     }
 
     @Override

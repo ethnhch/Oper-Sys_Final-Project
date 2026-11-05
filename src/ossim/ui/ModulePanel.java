@@ -38,7 +38,7 @@ abstract class ModulePanel extends JPanel {
 
     protected final OutputPane output = new OutputPane();
     private final JLabel eyebrow = Theme.caption("Module");
-    private final JLabel title = Theme.label("", Theme.TITLE, Theme.CORAL_BRIGHT);
+    private final JLabel title = Theme.label("", Theme.TITLE, Theme.NEON_BRIGHT);
     private final JLabel description = new JLabel();
     private final String descriptionHtml;
     private final String moduleName;
@@ -71,7 +71,7 @@ abstract class ModulePanel extends JPanel {
             c.setAlignmentX(Component.LEFT_ALIGNMENT);
             header.add(c);
         }
-        eyebrow.setForeground(Theme.CORAL_LIGHT);
+        eyebrow.setForeground(Theme.NEON_LIGHT);
         title.setBorder(Theme.padding(2, 0, 4, 0));
         add(header, BorderLayout.NORTH);
         updateDescription(600);
@@ -112,6 +112,7 @@ abstract class ModulePanel extends JPanel {
             south.add(control);
         }
         left.add(south, BorderLayout.SOUTH);
+        hookClear(left);
         output.setMinimumSize(new Dimension(300, 240));
         inputCard = left;
 
@@ -265,7 +266,7 @@ abstract class ModulePanel extends JPanel {
                 + descriptionHtml + "</div></html>");
     }
 
-    /** Creates a button whose task is guarded; the button labelled "Run" becomes the coral primary action. */
+    /** Creates a button whose task is guarded; the button labelled "Run" becomes the neon primary action. */
     protected final JButton action(String text, Runnable task) {
         boolean isPrimary = text.equals("Run");
         JButton button = Ui.button(text, isPrimary ? ThemeButton.Kind.PRIMARY : ThemeButton.Kind.SECONDARY,
@@ -274,6 +275,18 @@ abstract class ModulePanel extends JPanel {
             primary = button;
         }
         return button;
+    }
+
+    /** Pressing Clear on any input table also empties the results, so a cleared module never shows stale output. */
+    private void hookClear(java.awt.Container root) {
+        if (root instanceof InputTable table) {
+            table.setOnClear(output::showEmpty);
+        }
+        for (Component c : root.getComponents()) {
+            if (c instanceof java.awt.Container inner) {
+                hookClear(inner);
+            }
+        }
     }
 
     /** Keyboard shortcut target (Ctrl+Enter / F5). */

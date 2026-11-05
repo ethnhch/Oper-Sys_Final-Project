@@ -26,7 +26,7 @@ public final class BankersAlgorithm {
             }
         }
 
-        int[] work = available.clone();
+        long[] work = Arrays.stream(available).asLongStream().toArray();
         boolean[] finished = new boolean[n];
         List<Integer> sequence = new ArrayList<>();
         List<String> trace = new ArrayList<>();
@@ -68,8 +68,13 @@ public final class BankersAlgorithm {
         if (process < 0 || process >= allocation.length) {
             throw new InputException("Process P" + process + " does not exist.");
         }
-        if (request.length != m) {
+        if (request == null || request.length != m) {
             throw new InputException("Request must have exactly " + m + " values.");
+        }
+        for (int value : request) {
+            if (value < 0) {
+                throw new InputException("Resource requests cannot be negative.");
+            }
         }
         if (!fits(request, current.need()[process])) {
             return new RequestResult(false, "Denied: P" + process + " exceeds its maximum claim (Request > Need).", current);
@@ -89,9 +94,18 @@ public final class BankersAlgorithm {
                 : new RequestResult(false, "Denied: granting the request leads to an unsafe state.", after);
     }
 
-    private static boolean fits(int[] need, int[] work) {
+    private static boolean fits(int[] need, long[] work) {
         for (int j = 0; j < need.length; j++) {
             if (need[j] > work[j]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean fits(int[] request, int[] available) {
+        for (int j = 0; j < request.length; j++) {
+            if (request[j] > available[j]) {
                 return false;
             }
         }
@@ -107,10 +121,16 @@ public final class BankersAlgorithm {
     }
 
     private static void validate(int[][] allocation, int[][] max, int[] available) {
-        if (allocation.length == 0 || available.length == 0) {
+        if (allocation == null || max == null || available == null || allocation.length == 0 || available.length == 0) {
             throw new InputException("At least one process and one resource type are required.");
         }
+        if (max.length != allocation.length) {
+            throw new InputException("Allocation and Max must have the same number of processes.");
+        }
         for (int i = 0; i < allocation.length; i++) {
+            if (allocation[i] == null || max[i] == null || allocation[i].length != available.length || max[i].length != available.length) {
+                throw new InputException("Allocation and Max must each contain exactly " + available.length + " resource values for P" + i + ".");
+            }
             for (int j = 0; j < available.length; j++) {
                 if (allocation[i][j] < 0 || max[i][j] < 0) {
                     throw new InputException("Negative values are not allowed (P" + i + ", R" + j + ").");

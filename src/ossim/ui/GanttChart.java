@@ -91,7 +91,7 @@ final class GanttChart extends JPanel implements Scrollable {
         CpuScheduler.Slice last = slices.get(slices.size() - 1);
         int endX = MARGIN + (int) Math.round((last.end() - origin) * scale);
         String end = String.valueOf(last.end());
-        g2.setColor(Theme.CORAL_LIGHT);
+        g2.setColor(Theme.NEON_LIGHT);
         g2.drawLine(endX, axisY - 3, endX, axisY + 3);
         g2.drawString(end, endX - fm.stringWidth(end) / 2, axisY + 18);
         g2.dispose();

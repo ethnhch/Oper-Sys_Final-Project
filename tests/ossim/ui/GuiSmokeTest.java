@@ -30,6 +30,7 @@ public final class GuiSmokeTest {
             validRun(name, factory.get(), "Load Large", "Run");
             invalidRun(name, factory.get());
         }
+        clearEmptiesResults();
         System.out.println(failures == 0 ? "\nGUI smoke test: ALL OK" : "\nGUI smoke test: " + failures + " FAILURE(S)");
         System.exit(failures == 0 ? 0 : 1);
     }
@@ -43,6 +44,20 @@ public final class GuiSmokeTest {
             report(true, name + " valid [" + String.join(" > ", clicks) + "] " + (System.nanoTime() - start) / 1_000_000 + " ms");
         } catch (RuntimeException e) {
             report(false, name + " valid [" + String.join(" > ", clicks) + "] threw " + e);
+        }
+    }
+
+    /** After Run the results are shown; pressing Clear on the input table must empty them again. */
+    private static void clearEmptiesResults() {
+        CpuPanel panel = new CpuPanel();
+        try {
+            click(panel, "Run");
+            boolean shown = panel.output.hasResults();
+            click(panel, "Clear");
+            boolean cleared = !panel.output.hasResults();
+            report(shown && cleared, "CpuPanel Clear empties the results (shown=" + shown + ", cleared=" + cleared + ")");
+        } catch (RuntimeException e) {
+            report(false, "CpuPanel Clear empties the results threw " + e);
         }
     }
 

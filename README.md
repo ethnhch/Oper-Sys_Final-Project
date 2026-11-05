@@ -1,4 +1,4 @@
-# Mini Operating System Simulator (Java / Swing)
+# NEXUS // OS — Cyber Operating System Simulator (Java / Swing)
 
 A GUI-based simulator covering the eight required Operating System modules: **CPU Scheduling, Deadlock (Banker's Algorithm), Paging, Page Replacement, Segmentation, Fragmentation, Disk Scheduling and Multiprogramming**.
 
@@ -8,13 +8,17 @@ Every module accepts a **user-defined, unlimited number of items** (rows are add
 
 ## 1. Quick Start
 
+For a ready-to-use 10-minute demonstration sequence and likely instructor questions, see [`PRESENTATION_GUIDE.md`](PRESENTATION_GUIDE.md).
+
 **Requirements:** JDK 17 or newer (developed and tested on JDK 21). No external libraries.
 
 ```bash
 ./build.sh              # compiles and creates MiniOS.jar   (Windows: build.bat)
 java -jar MiniOS.jar    # starts the simulator
-./test.sh               # runs both test suites
+./test.sh               # runs both test suites             (Windows: test.bat)
 ```
+
+On Windows, run `build.bat` and `test.bat` from a Command Prompt opened in the project folder. `MiniOS.jar` in the repository is built from the current source and uses the Neon Matrix cyber look; run `build.bat` again after changing any code.
 
 Every module has three buttons: **Load Sample** (small textbook dataset), **Load Large** (hundreds to thousands of items), and **Run**.
 
@@ -50,7 +54,7 @@ MiniOS/
 
 ## 3. GUI Guide
 
-The left tab strip is the main menu (modules 1–8). Each screen has the same layout:
+The left navigation rail is the main menu (modules 1–8). The application branding is **NEXUS // OS**, with the **Neon Matrix** palette as the default. A current CPU Scheduling screen capture is available at `docs/screenshots/nexus_neon_matrix_cpu.png`. Each screen has the same layout:
 
 | Area | Content |
 |---|---|
@@ -58,9 +62,13 @@ The left tab strip is the main menu (modules 1–8). Each screen has the same la
 | Left | Input tables (**Add Row / Remove Selected / Clear**) or text areas, option selectors, and the **Load Sample / Load Large / Run** buttons |
 | Right | Result tabs (tables, charts) and a text summary with totals and formulas |
 
-**Dynamic input:** tables grow row by row; reference strings and request lists are free text of any length; the Banker's tables are generated from the process/resource counts you type. The only numeric limit is **1,000,000 per single value** (to keep sums inside `int`). There is **no limit on the number of items**.
+**Cyber design system:** the default **Neon Matrix** theme uses near-black surfaces, electric-green highlights, high-contrast text, terminal-style monospace data, glowing active states, and consistent neon accents across every module. Optional **Cyber Light** and **Cyber Midnight** palettes are also available. Switch with the three-part switch in the header or with **Ctrl+T**; the choice is remembered for the next launch. Other shortcuts: **Ctrl+1–8** module, **Ctrl+Enter / F5** run, **Ctrl+B** collapse the menu.
 
-**Error handling:** blank fields, non-numbers, negative values, out-of-range values and inconsistent data (duplicate IDs, Allocation > Max, request beyond the disk, frame out of range, …) show a message naming the row and field. They never crash the program.
+**Clear:** pressing *Clear* on an input table empties the table and also returns the Results card to "No results yet", so old results never stay on screen next to empty input.
+
+**Dynamic input:** tables grow row by row; reference strings and request lists are free text; the Banker's tables are generated from the process/resource counts you type. There is **no hardcoded item-count limit**; practical limits are available memory and UI responsiveness. The GUI currently validates individual numeric fields up to **1,000,000**. Core calculations use wider accumulators where needed, and CPU/multiprogramming reject simulated timelines that exceed the supported 32-bit time range.
+
+**Error handling:** blank fields, non-numbers, negative values, out-of-range values and inconsistent data (duplicate IDs, Allocation > Max, request beyond the disk, frame out of range, …) show a message naming the row and field. The core API also validates matrix dimensions and multiprogramming job values. Arithmetic that could overflow the simulator's integer time representation is rejected with a clear input error; Banker’s Algorithm uses a wider working-resource accumulator to avoid overflow while releasing allocations.
 
 ---
 
@@ -193,7 +201,7 @@ SRTF Gantt: `P1[0-1] P2[1-5] P4[5-10] P1[10-17] P3[17-26]`
 
 ## 6. Testing and Verification Evidence
 
-Run `./test.sh`. Results are stored in `TEST_RESULTS_core.txt` (103 checks) and `TEST_RESULTS_gui.txt` (24 scenarios).
+Run `./test.sh` (Windows: `test.bat`). The saved outputs of the last run are in `TEST_RESULTS_core.txt` (124 checks, all passed) and `TEST_RESULTS_gui.txt` (25 scenarios, all passed). Screenshots of every module on a small and a large dataset are in `docs/screenshots/`.
 
 **A. Algorithm tests (`SelfTest`)**
 - **Known/manual results** from standard textbook problems: Banker's safe sequence, FIFO 15 / LRU 12 / OPT 9 faults, Belady's anomaly (FIFO 9 faults with 3 frames, 10 with 4), disk movement 640/236/331/382/299/322, segmentation and paging translations, first/best/worst/next-fit placements, CPU averages (FCFS 17, SJF 3, RR 17/3, SRTF 6.5, Priority 7.75).
@@ -201,11 +209,23 @@ Run `./test.sh`. Results are stored in `TEST_RESULTS_core.txt` (103 checks) and 
 - **Exceptional cases:** burst 0, duplicate IDs, quantum 0, Allocation > Max, frame out of range, request beyond disk, job larger than total memory, empty input.
 - **Large datasets:** 5,000 processes, 300×8 Banker's system, 20,000 page references, 20,000 disk requests, 2,000 blocks × 2,000 processes, 1,000 multiprogrammed jobs, 20,000 address translations. Checks are invariants: executed time equals total burst, every request is served, OPT ≤ LRU and OPT ≤ FIFO, SSTF ≤ FCFS, utilization ≤ 100 %.
 
-**B. GUI tests (`GuiSmokeTest`)** drive each real panel through its buttons: *Run* on sample data, *Load Large → Run*, and invalid input (cleared tables, text in numeric fields). Invalid input must reach the validation dialog, never an unexpected exception.
+**B. GUI tests (`GuiSmokeTest`)** drive each real panel through its buttons: *Run* on sample data, *Load Large → Run*, and invalid input (cleared tables, text in numeric fields). Invalid input must reach the validation dialog, never an unexpected exception. One more scenario checks that *Clear* empties the results.
 
 ---
 
-## 7. Mapping to the Rubric
+## 7. Rubric Coverage and Presentation Readiness
+
+The supplied instructor rubric scores the project across six areas (100 points total): implementation (40), GUI/usability (10), accuracy/testing (15), source/submission (10), presentation (15), and OS-concept understanding (10). This project is structured to address each area:
+
+- **Eight required modules:** CPU Scheduling, Banker’s Algorithm, Paging, Page Replacement, Segmentation, Fragmentation, Disk Scheduling, and Multiprogramming.
+- **Flexible input:** add/remove table rows, free-form variable-length reference/request lists, and count-driven Banker matrices. There is no fixed item-count cap; individual numeric values are bounded for safe integer arithmetic.
+- **Validation:** blank, malformed, negative, out-of-range, duplicate, and inconsistent values are rejected with field-specific messages rather than being passed into the algorithms.
+- **Demonstration evidence:** every module includes a small sample and a large-data loader; algorithm and GUI tests cover normal, boundary, exceptional, and larger workloads.
+- **Submission package:** Java source, runnable JAR, build/test scripts, module documentation, sample results, and test evidence are included.
+
+**Course-specific note:** the rubric says “all algorithms covered in class” for CPU and disk scheduling but does not enumerate the instructor’s complete class list. The simulator currently includes FCFS, SJF, SRTF, non/preemptive Priority, Round Robin; and FCFS, SSTF, SCAN, C-SCAN, LOOK, C-LOOK. Confirm with the instructor that these match the algorithms taught in your section.
+
+### Rubric score mapping
 
 | Rubric section (points) | Where it is satisfied |
 |---|---|
@@ -226,7 +246,7 @@ Run `./test.sh`. Results are stored in `TEST_RESULTS_core.txt` (103 checks) and 
 |---|---|
 | 1 min | Title, goal, Java/Swing, the eight modules, `core` vs `ui` separation |
 | 2 min | Left menu, an input table (add/remove rows), result tabs, one invalid input producing a message |
-| 4 min | Load Sample then Run in each module: CPU Gantt + comparison; Banker's safe sequence (then Check Request); paging translation with a fault; page replacement trace; segmentation error; fragmentation (Dynamic/First Fit shows external fragmentation); disk chart; multiprogramming utilization. Press **Load Large** once to prove unlimited input |
+| 4 min | Load Sample then Run in each module: CPU Gantt + comparison; Banker's safe sequence (then Check Request); paging translation with a fault; page replacement trace; segmentation error; fragmentation (Dynamic/First Fit shows external fragmentation); disk chart; multiprogramming utilization. Use **Load Large** once to demonstrate a larger dataset; add/remove rows to demonstrate flexible input |
 | 2 min | Explain one algorithm end to end (e.g., Banker's: Need → Work → sequence) and one challenge |
 | 1 min | Questions and conclusion |
 
@@ -248,6 +268,6 @@ Run `./test.sh`. Results are stored in `TEST_RESULTS_core.txt` (103 checks) and 
 - **Tie-breaking** is defined and consistent (arrival time, then input order), so results are reproducible and can be checked by hand.
 - **Disk-edge and return-jump conventions** differ between textbooks; they are documented above and the jump is switchable.
 - **Multiprogramming model:** CPU-bound programs only (no I/O waits); dispatch happens at quantum boundaries. It demonstrates memory sharing, admission control and utilization, but CPU utilization is naturally near 100 % when programs are always ready.
-- **Value cap:** a single number must be ≤ 1,000,000 (not the item count). Very large bursts with a quantum of 1 produce very long Round Robin traces and are limited only by memory and time.
+- **Value cap:** GUI numeric fields currently accept values up to 1,000,000 (not an item-count cap). Very large bursts with a quantum of 1 produce very long Round Robin traces and are limited by memory and execution time.
 - **Algorithm complexity:** CPU scheduling is O(n²) in the number of processes (verified with 5,000); Optimal replacement is O(n·f) and the Banker safety check is O(n²·m); both are verified on the large datasets above.
 - **Not included (out of the rubric's scope):** reading/writing input files and exporting results; the tables can be sorted by clicking column headers.
