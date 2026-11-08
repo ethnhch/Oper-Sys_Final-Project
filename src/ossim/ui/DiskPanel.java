@@ -104,7 +104,7 @@ final class DiskPanel extends ModulePanel {
     private static List<Object[]> comparisonRows(List<Integer> list, int start, int max, Direction dir, boolean jump) {
         List<Object[]> rows = new ArrayList<>();
         for (Algorithm a : Algorithm.values()) {
-            int total = DiskScheduler.run(a, list, start, max, dir, jump).totalMovement();
+            long total = DiskScheduler.run(a, list, start, max, dir, jump).totalMovement();
             rows.add(new Object[]{a.toString(), total, Ui.two((double) total / list.size())});
         }
         return rows;

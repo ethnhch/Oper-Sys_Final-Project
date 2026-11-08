@@ -8,7 +8,7 @@ import java.awt.BorderLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
-/** Bottom bar: result of the last action (green = ok, coral = invalid input) and the keyboard shortcuts. */
+/** Bottom bar: result of the last action (green = ok, neon = invalid input) and the keyboard shortcuts. */
 final class StatusBar extends JPanel {
     private final JLabel message = Theme.label("Ready", Theme.SMALL, Theme.TEXT_MUTED);
     private final JLabel keys = Theme.label("Ctrl+1–8 module  ·  Ctrl+Enter / F5 run  ·  Ctrl+B menu  ·  Ctrl+T theme",
@@ -41,8 +41,8 @@ final class StatusBar extends JPanel {
     /** Shows an action outcome; it falls back to the module hint after a few seconds. */
     void show(boolean ok, String text) {
         message.setText(text);
-        message.setForeground(ok ? Theme.TEXT : Theme.CORAL_LIGHT);
-        dot.color = ok ? Theme.SUCCESS : Theme.CORAL;
+        message.setForeground(ok ? Theme.TEXT : Theme.NEON_LIGHT);
+        dot.color = ok ? Theme.SUCCESS : Theme.NEON;
         dot.repaint();
         fade.restart();
     }

@@ -5,7 +5,7 @@ import ossim.ui.MainFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-/** Entry point of the Mini Operating System Simulator. */
+/** Entry point of the NEXUS // OS cyber-themed operating system simulator. */
 public final class Main {
     private Main() { }
 

@@ -27,6 +27,9 @@ public final class Segmentation {
         Map<Integer, Segment> byId = indexById(table);
         List<Translation> out = new ArrayList<>(references.size());
         for (Reference ref : references) {
+            if (ref == null || ref.offset() < 0) {
+                throw new InputException("Logical segment references must have a non-negative offset.");
+            }
             Segment seg = byId.get(ref.segment());
             if (seg == null) {
                 out.add(new Translation(ref, null, null, "ERROR: segment " + ref.segment() + " is not defined"));
@@ -60,6 +63,9 @@ public final class Segmentation {
         }
         Map<Integer, Segment> byId = new HashMap<>();
         for (Segment s : table) {
+            if (s.base() < 0) {
+                throw new InputException("Segment " + s.id() + ": base address cannot be negative.");
+            }
             if (s.limit() < 1) {
                 throw new InputException("Segment " + s.id() + ": limit must be at least 1.");
             }

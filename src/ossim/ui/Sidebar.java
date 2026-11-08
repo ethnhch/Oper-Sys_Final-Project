@@ -46,7 +46,7 @@ final class Sidebar extends JPanel {
         list.setOpaque(false);
         list.setBorder(Theme.padding(10, 10, 10, 10));
         add(list, BorderLayout.NORTH);
-        footer = Theme.label("Mini OS Simulator · Java Swing", Theme.SMALL, Theme.TEXT_FAINT);
+        footer = Theme.label("NEXUS // OS  ·  JAVA KERNEL", Theme.SMALL, Theme.TEXT_FAINT);
         footer.setBorder(Theme.padding(10, 20, 14, 10));
         add(footer, BorderLayout.SOUTH);
         setPreferredSize(new Dimension(EXPANDED_WIDTH, 0));
@@ -175,16 +175,16 @@ final class Sidebar extends JPanel {
             int w = getWidth();
             int h = getHeight();
             if (active) {
-                g2.setColor(Theme.CORAL_TINT);
+                g2.setColor(Theme.NEON_TINT);
                 g2.fillRoundRect(0, 0, w, h, 12, 12);
-                g2.setColor(Theme.CORAL);
+                g2.setColor(Theme.NEON);
                 g2.fillRoundRect(0, 8, 3, h - 16, 3, 3);
             } else if (hover) {
                 g2.setColor(Theme.SURFACE_2);
                 g2.fillRoundRect(0, 0, w, h, 12, 12);
             }
             if (isFocusOwner() && keyboardFocus) {
-                g2.setColor(Theme.alpha(Theme.CORAL_LIGHT, 170));
+                g2.setColor(Theme.alpha(Theme.NEON_LIGHT, 170));
                 g2.drawRoundRect(0, 0, w - 1, h - 1, 12, 12);
             }
             // numbered badge
@@ -192,16 +192,16 @@ final class Sidebar extends JPanel {
             int badge = 28;
             int bx = compact ? (w - badge) / 2 : 10;
             int by = (h - badge) / 2;
-            g2.setColor(active ? Theme.CORAL : Theme.SURFACE_2);
+            g2.setColor(active ? Theme.NEON : Theme.SURFACE_2);
             g2.fillRoundRect(bx, by, badge, badge, 9, 9);
             g2.setFont(Theme.SMALL_BOLD);
             FontMetrics fm = g2.getFontMetrics();
-            g2.setColor(active ? Theme.ON_CORAL : Theme.TEXT_MUTED);
+            g2.setColor(active ? Theme.ON_NEON : Theme.TEXT_MUTED);
             g2.drawString(number, bx + (badge - fm.stringWidth(number)) / 2, by + (badge + fm.getAscent() - fm.getDescent()) / 2);
             if (!compact) {
                 g2.setFont(active ? Theme.BODY_BOLD : Theme.BODY);
                 fm = g2.getFontMetrics();
-                g2.setColor(active ? Theme.CORAL_LIGHT : hover ? Theme.TEXT : Theme.TEXT_MUTED);
+                g2.setColor(active ? Theme.NEON_LIGHT : hover ? Theme.TEXT : Theme.TEXT_MUTED);
                 g2.drawString(name, bx + badge + 12, (h + fm.getAscent() - fm.getDescent()) / 2);
             }
             g2.dispose();

@@ -12,7 +12,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.util.List;
 
-/** Small Swing helpers shared by all module panels (all of them produce Charcoal &amp; Coral themed parts). */
+/** Small Swing helpers shared by all module panels (all of them produce charcoal and neon cyber-themed parts). */
 final class Ui {
     /** Upper bound for a single numeric value (never for the number of items) so sums stay inside the int range. */
     static final int MAX_VALUE = 1_000_000;
@@ -55,9 +55,9 @@ final class Ui {
         area.setFont(MONO);
         area.setBackground(Theme.INSET);
         area.setForeground(Theme.TEXT);
-        area.setCaretColor(Theme.CORAL_LIGHT);
-        area.setSelectionColor(Theme.CORAL);
-        area.setSelectedTextColor(Theme.ON_CORAL);
+        area.setCaretColor(Theme.NEON_LIGHT);
+        area.setSelectionColor(Theme.NEON);
+        area.setSelectedTextColor(Theme.ON_NEON);
         area.setBorder(Theme.padding(8, 10, 8, 10));
         area.setText(initial);
         return area;

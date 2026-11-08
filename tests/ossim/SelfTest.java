@@ -49,6 +49,8 @@ public final class SelfTest {
         expectInvalid("CPU duplicate id rejected", () -> CpuScheduler.run(Algorithm.FCFS, List.of(new Proc("A", 0, 1, 0), new Proc("A", 1, 1, 0)), 1));
         expectInvalid("CPU quantum 0 rejected", () -> CpuScheduler.run(Algorithm.ROUND_ROBIN, burst, 0));
         expectInvalid("CPU empty rejected", () -> CpuScheduler.run(Algorithm.FCFS, List.of(), 1));
+        expectInvalid("CPU time overflow rejected", () -> CpuScheduler.run(Algorithm.FCFS,
+                List.of(new Proc("A", Integer.MAX_VALUE - 2, 5, 0)), 1));
     }
 
     // ---------------------------------------------------------------- Banker
@@ -71,6 +73,11 @@ public final class SelfTest {
         check("Banker unsafe state", false, BankersAlgorithm.analyze(new int[][]{{1}, {1}}, new int[][]{{2}, {2}}, new int[]{0}).safe());
         expectInvalid("Banker Allocation > Max rejected", () -> BankersAlgorithm.analyze(new int[][]{{3}}, new int[][]{{2}}, new int[]{1}));
         expectInvalid("Banker negative available rejected", () -> BankersAlgorithm.analyze(new int[][]{{0}}, new int[][]{{2}}, new int[]{-1}));
+        expectInvalid("Banker mismatched process rows rejected", () -> BankersAlgorithm.analyze(new int[][]{{0}, {0}}, new int[][]{{1}}, new int[]{1}));
+        expectInvalid("Banker mismatched resource columns rejected", () -> BankersAlgorithm.analyze(new int[][]{{0, 0}}, new int[][]{{1}}, new int[]{1}));
+        check("Banker work accumulator avoids overflow", true, BankersAlgorithm.analyze(
+                new int[][]{{1_000_000_000}, {1_000_000_000}, {1_000_000_000}},
+                new int[][]{{1_000_000_000}, {1_000_000_000}, {1_000_000_000}}, new int[]{0}).safe());
     }
 
     // ---------------------------------------------------------------- Paging
@@ -83,6 +90,8 @@ public final class SelfTest {
         check("Paging boundary 1023 -> 5*1024+1023", 6143L, t.get(4).physical());
         expectInvalid("Paging frame out of range rejected", () -> Paging.translate(1024, 2, table, List.of(1L)));
         expectInvalid("Paging duplicate frame rejected", () -> Paging.translate(1024, 8, List.of(new Paging.Entry(0, 1), new Paging.Entry(1, 1)), List.of(1L)));
+        expectInvalid("Paging negative logical address rejected", () -> Paging.translate(1024, 8, table, List.of(-1L)));
+        expectInvalid("Paging negative frame rejected", () -> Paging.translate(1024, 8, List.of(new Paging.Entry(0, -1)), List.of(0L)));
     }
 
     // ---------------------------------------------------------------- Page replacement
@@ -98,6 +107,7 @@ public final class SelfTest {
         check("PR frames > distinct pages = distinct faults", 3, PageReplacement.run(PageReplacement.Algorithm.FIFO, List.of(1, 2, 3, 1, 2, 3), 10).faults());
         check("PR Clock faults (textbook string) = 14", 14, PageReplacement.run(PageReplacement.Algorithm.CLOCK, refs, 3).faults());
         expectInvalid("PR zero frames rejected", () -> PageReplacement.run(PageReplacement.Algorithm.FIFO, refs, 0));
+        expectInvalid("PR negative page rejected", () -> PageReplacement.run(PageReplacement.Algorithm.FIFO, List.of(1, -1), 2));
     }
 
     // ---------------------------------------------------------------- Segmentation
@@ -115,6 +125,8 @@ public final class SelfTest {
         check("Seg offset = limit invalid", false, t.get(5).valid());
         check("Seg overlap detected", 1, Segmentation.overlapWarnings(List.of(new Segmentation.Segment(0, 0, 100), new Segmentation.Segment(1, 50, 100))).size());
         expectInvalid("Seg duplicate id rejected", () -> Segmentation.translate(List.of(new Segmentation.Segment(0, 0, 1), new Segmentation.Segment(0, 5, 1)), List.of()));
+        expectInvalid("Seg negative offset rejected", () -> Segmentation.translate(table, List.of(new Segmentation.Reference(0, -1))));
+        expectInvalid("Seg negative base rejected", () -> Segmentation.translate(List.of(new Segmentation.Segment(0, -1, 5)), List.of()));
     }
 
     // ---------------------------------------------------------------- Fragmentation
@@ -130,11 +142,18 @@ public final class SelfTest {
         Fragmentation.Result dyn = Fragmentation.run(Fragmentation.Strategy.FIRST_FIT, Fragmentation.Mode.DYNAMIC, blocks, procs);
         check("Frag dynamic detects external fragmentation", 1, dyn.externalFailures());
         check("Frag dynamic internal = 0", 0, dyn.internalFragmentation());
+        check("Frag fixed partitions do not mislabel failures as external fragmentation", 0,
+                Fragmentation.run(Fragmentation.Strategy.FIRST_FIT, Fragmentation.Mode.FIXED, blocks, procs).externalFailures());
         Fragmentation.Result worst = Fragmentation.run(Fragmentation.Strategy.WORST_FIT, Fragmentation.Mode.FIXED, blocks, procs);
         check("Frag worst fit P1 -> block 4 (600)", 4, worst.allocations().get(0).block());
         Fragmentation.Result next = Fragmentation.run(Fragmentation.Strategy.NEXT_FIT, Fragmentation.Mode.FIXED, List.of(10, 20, 30), List.of(new Fragmentation.Request("A", 5), new Fragmentation.Request("B", 5)));
         check("Frag next fit continues after last block", 1, next.allocations().get(1).block());
         expectInvalid("Frag empty blocks rejected", () -> Fragmentation.run(Fragmentation.Strategy.BEST_FIT, Fragmentation.Mode.FIXED, List.of(), procs));
+        expectInvalid("Frag negative block size rejected", () -> Fragmentation.run(Fragmentation.Strategy.FIRST_FIT, Fragmentation.Mode.FIXED, List.of(-1), procs));
+        expectInvalid("Frag duplicate process IDs rejected", () -> Fragmentation.run(Fragmentation.Strategy.FIRST_FIT, Fragmentation.Mode.FIXED, List.of(10), List.of(new Fragmentation.Request("A", 1), new Fragmentation.Request("A", 2))));
+        check("Frag total-free accumulator avoids overflow", 3_999_999_999L,
+                Fragmentation.run(Fragmentation.Strategy.FIRST_FIT, Fragmentation.Mode.DYNAMIC,
+                        List.of(1_000_000_000, 1_000_000_000, 1_000_000_000, 1_000_000_000), List.of(new Fragmentation.Request("tiny", 1))).totalFree());
     }
 
     // ---------------------------------------------------------------- Disk
@@ -152,6 +171,10 @@ public final class SelfTest {
         check("Disk head on request", 0, DiskScheduler.run(DiskScheduler.Algorithm.FCFS, List.of(5), 5, 10, DiskScheduler.Direction.UP, true).totalMovement());
         expectInvalid("Disk request beyond limit rejected", () -> DiskScheduler.run(DiskScheduler.Algorithm.FCFS, List.of(500), 5, 199, DiskScheduler.Direction.UP, true));
         expectInvalid("Disk head beyond limit rejected", () -> DiskScheduler.run(DiskScheduler.Algorithm.FCFS, List.of(5), 500, 199, DiskScheduler.Direction.UP, true));
+        expectInvalid("Disk null direction rejected for SCAN", () -> DiskScheduler.run(DiskScheduler.Algorithm.SCAN, List.of(5), 2, 10, null, true));
+        check("Disk cumulative movement uses long arithmetic", 4L * Integer.MAX_VALUE,
+                DiskScheduler.run(DiskScheduler.Algorithm.FCFS, List.of(Integer.MAX_VALUE, 0, Integer.MAX_VALUE, 0),
+                        0, Integer.MAX_VALUE, DiskScheduler.Direction.UP, true).totalMovement());
     }
 
     // ---------------------------------------------------------------- Multiprogramming
@@ -163,7 +186,15 @@ public final class SelfTest {
         check("Multi: max degree = 2", 2, r.maxDegree());
         check("Multi: CPU utilization 100% (no gaps)", 100.0, r.cpuUtilization());
         check("Multi: finish = total burst", 20, r.finish());
+        Multiprogramming.Result delayed = Multiprogramming.run(List.of(
+                new Multiprogramming.Job("Long", 0, 10, 10), new Multiprogramming.Job("ArrivesDuringSlice", 1, 5, 1)), 20, 4);
+        check("Multi: admission is recorded at the actual dispatch boundary", 4, delayed.jobs().get(1).admitted());
         expectInvalid("Multi: job larger than memory rejected", () -> Multiprogramming.run(jobs, 45, 4));
+        expectInvalid("Multi: blank program ID rejected", () -> Multiprogramming.run(List.of(new Multiprogramming.Job(" ", 0, 1, 1)), 10, 1));
+        expectInvalid("Multi: negative arrival rejected", () -> Multiprogramming.run(List.of(new Multiprogramming.Job("A", -1, 1, 1)), 10, 1));
+        expectInvalid("Multi: zero memory rejected", () -> Multiprogramming.run(List.of(new Multiprogramming.Job("A", 0, 0, 1)), 10, 1));
+        expectInvalid("Multi: zero burst rejected", () -> Multiprogramming.run(List.of(new Multiprogramming.Job("A", 0, 1, 0)), 10, 1));
+        expectInvalid("Multi: time overflow rejected", () -> Multiprogramming.run(List.of(new Multiprogramming.Job("A", Integer.MAX_VALUE - 1, 1, 5)), 10, 1));
     }
 
     // ---------------------------------------------------------------- Large datasets (stability + invariants)

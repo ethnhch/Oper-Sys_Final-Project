@@ -42,12 +42,18 @@ public final class DiskScheduler {
         }
     }
 
-    public record Result(Algorithm algorithm, List<Integer> serviceOrder, List<Move> moves, int totalMovement, boolean jumpCounted) { }
+    public record Result(Algorithm algorithm, List<Integer> serviceOrder, List<Move> moves, long totalMovement, boolean jumpCounted) { }
 
     private DiskScheduler() { }
 
     public static Result run(Algorithm algorithm, List<Integer> requests, int head, int maxCylinder,
                              Direction direction, boolean countJump) {
+        if (algorithm == null) {
+            throw new InputException("Choose a disk scheduling algorithm.");
+        }
+        if (algorithm.usesDirection() && direction == null) {
+            throw new InputException("Choose an initial scan direction.");
+        }
         validate(requests, head, maxCylinder);
         Trace trace = new Trace(head);
         switch (algorithm) {
@@ -55,7 +61,7 @@ public final class DiskScheduler {
             case SSTF -> sstf(requests, trace);
             default -> sweep(algorithm, requests, head, maxCylinder, direction, trace);
         }
-        int total = 0;
+        long total = 0;
         for (Move m : trace.moves) {
             if (m.kind() != Kind.JUMP || countJump) {
                 total += m.distance();
@@ -129,7 +135,7 @@ public final class DiskScheduler {
     }
 
     private static void validate(List<Integer> requests, int head, int max) {
-        if (requests.isEmpty()) {
+        if (requests == null || requests.isEmpty()) {
             throw new InputException("Enter at least one disk request.");
         }
         if (max < 1) {
@@ -138,7 +144,11 @@ public final class DiskScheduler {
         if (head < 0 || head > max) {
             throw new InputException("Initial head position " + head + " must be between 0 and " + max + ".");
         }
-        for (int r : requests) {
+        for (Integer request : requests) {
+            if (request == null) {
+                throw new InputException("Disk requests cannot contain blank values.");
+            }
+            int r = request;
             if (r < 0 || r > max) {
                 throw new InputException("Request " + r + " is outside the disk range 0.." + max + ".");
             }

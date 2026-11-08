@@ -14,6 +14,7 @@ final class InputTable extends JPanel {
     private final JTable table;
     private final int columns;
     private final javax.swing.JLabel count = Theme.label("0 rows", Theme.SMALL, Theme.TEXT_FAINT);
+    private Runnable onClear = () -> { };
 
     InputTable(String title, String... columnNames) {
         super(new BorderLayout(4, 4));
@@ -49,6 +50,12 @@ final class InputTable extends JPanel {
     private void clear() {
         stopEditing();
         model.setRowCount(0);
+        onClear.run();
+    }
+
+    /** Registers what happens after the user presses Clear (the module empties its results). */
+    void setOnClear(Runnable action) {
+        onClear = action;
     }
 
     void setRows(List<String[]> rows) {

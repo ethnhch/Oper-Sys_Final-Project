@@ -31,10 +31,15 @@ import java.util.function.Supplier;
  * Main window: charcoal header, grouped sidebar menu (modules 1-8), the active module, and a status bar.
  * Responsive: the sidebar collapses to badges below {@link Theme#BP_SIDEBAR}; each module stacks its input and
  * results below {@link Theme#BP_STACK}. Shortcuts: Ctrl+1..8 switch module, Ctrl+Enter / F5 run, Ctrl+B menu,
- * Ctrl+T light/dark mode (also the moon/sun switch in the header; the choice is remembered).
+ * Ctrl+T cycles Neon Matrix, Cyber Light and Cyber Midnight; the choice is remembered.
  */
 public final class MainFrame extends JFrame {
     private record Module(String group, String name, Supplier<ModulePanel> factory) { }
+
+    // Install the persisted theme before any Swing components are constructed.
+    static {
+        Theme.install(savedMode());
+    }
 
     private static final List<Module> MODULES = List.of(
             new Module("Process management", "CPU Scheduling", CpuPanel::new),
@@ -52,13 +57,13 @@ public final class MainFrame extends JFrame {
     private final Sidebar sidebar = new Sidebar(this::show);
     private final StatusBar status = new StatusBar();
     private final JLabel crumb = Theme.label("", Theme.BODY, Theme.TEXT_MUTED);
-    private final JLabel subtitle = Theme.label("OPERATING SYSTEM SIMULATOR", Theme.SMALL_BOLD, Theme.TEXT_MUTED);
+    private final JLabel subtitle = Theme.label("CYBER SYSTEM SIMULATOR  /  KERNEL LAB", Theme.SMALL_BOLD, Theme.TEXT_MUTED);
     private int current;
     private Boolean compactOverride;
     private boolean lastAutoCompact;
 
     public MainFrame() {
-        super("Mini OS Simulator");
+        super("NEXUS // OS — Cyber Operating System Simulator");
         content.setBackground(Theme.BG);
         String group = "";
         for (int i = 0; i < MODULES.size(); i++) {
@@ -118,7 +123,7 @@ public final class MainFrame extends JFrame {
         });
         brand.add(menu);
         brand.add(new LogoMark());
-        brand.add(Theme.label("MINI OS", Theme.BRAND, Theme.CORAL_BRIGHT));
+        brand.add(Theme.label("NEXUS // OS", Theme.BRAND, Theme.NEON_BRIGHT));
         brand.add(subtitle);
         bar.add(brand, BorderLayout.WEST);
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 14, 0));
@@ -139,7 +144,7 @@ public final class MainFrame extends JFrame {
         bind(root, KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "run-f5", () -> panels.get(current).runPrimary());
         bind(root, KeyStroke.getKeyStroke(KeyEvent.VK_B, ctrl), "sidebar", this::toggleSidebar);
         bind(root, KeyStroke.getKeyStroke(KeyEvent.VK_T, ctrl), "theme",
-                () -> setTheme(Theme.mode() == Theme.Mode.DARK ? Theme.Mode.LIGHT : Theme.Mode.DARK));
+                () -> setTheme(nextTheme(Theme.mode())));
     }
 
     private static void bind(JComponent root, KeyStroke key, String name, Runnable action) {
@@ -168,16 +173,16 @@ public final class MainFrame extends JFrame {
         }
         Theme.setMode(mode);
         savedMode(mode);
-        status.show(true, (mode == Theme.Mode.DARK ? "Dark" : "Light") + " mode \u2014 press Ctrl+T to switch back");
+        status.show(true, themeName(mode) + " theme active \u2014 Ctrl+T cycles themes");
     }
 
     /** Reads the saved appearance (dark by default). */
     public static Theme.Mode savedMode() {
         try {
             return Theme.Mode.valueOf(java.util.prefs.Preferences.userNodeForPackage(MainFrame.class)
-                    .get("theme", Theme.Mode.DARK.name()));
+                    .get("theme", Theme.Mode.CYBER_GREEN.name()));
         } catch (RuntimeException e) {
-            return Theme.Mode.DARK;
+            return Theme.Mode.CYBER_GREEN;
         }
     }
 
@@ -239,7 +244,7 @@ public final class MainFrame extends JFrame {
                 g2.setColor(Theme.SURFACE_2);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
             }
-            g2.setColor(hover ? Theme.CORAL_LIGHT : Theme.TEXT_MUTED);
+            g2.setColor(hover ? Theme.NEON_LIGHT : Theme.TEXT_MUTED);
             for (int i = 0; i < 3; i++) {
                 g2.fillRoundRect(9, 11 + i * 5, 16, 2, 2, 2);
             }
@@ -247,78 +252,104 @@ public final class MainFrame extends JFrame {
         }
     }
 
-    /** Two-segment moon / sun switch in the header; the active mode is filled with coral. */
+    /** Three-way theme selector. Theme changes affect colors only; module layout stays intact. */
     private static final class ModeSwitch extends JComponent {
-        private static final int W = 72;
+        private static final int W = 168;
         private static final int H = 32;
         private int hover = -1;
+        private final java.util.function.Consumer<Theme.Mode> onChange;
+        private final Theme.Mode[] modes = {Theme.Mode.CYBER_GREEN, Theme.Mode.CYBER_LIGHT, Theme.Mode.CYBER_MIDNIGHT};
+        private final String[] labels = {"NEON", "", ""};
 
         ModeSwitch(java.util.function.Consumer<Theme.Mode> onChange) {
+            this.onChange = onChange;
             setPreferredSize(new Dimension(W, H));
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            setToolTipText("Dark / light mode (Ctrl+T)");
+            setToolTipText("Switch theme (Ctrl+T cycles all three themes)");
             MouseAdapter mouse = new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    onChange.accept(e.getX() < W / 2 ? Theme.Mode.DARK : Theme.Mode.LIGHT);
+                @Override public void mouseClicked(MouseEvent e) {
+                    int slot = Math.min(2, Math.max(0, e.getX() * 3 / W));
+                    onChange.accept(modes[slot]);
                     repaint();
                 }
-
-                @Override
-                public void mouseMoved(MouseEvent e) {
-                    hover = e.getX() < W / 2 ? 0 : 1;
-                    repaint();
+                @Override public void mouseMoved(MouseEvent e) {
+                    hover = Math.min(2, Math.max(0, e.getX() * 3 / W)); repaint();
                 }
-
-                @Override
-                public void mouseExited(MouseEvent e) {
-                    hover = -1;
-                    repaint();
-                }
+                @Override public void mouseExited(MouseEvent e) { hover = -1; repaint(); }
             };
             addMouseListener(mouse);
             addMouseMotionListener(mouse);
         }
 
-        @Override
-        protected void paintComponent(Graphics g) {
+        @Override protected void paintComponent(Graphics g) {
             Graphics2D g2 = Theme.smooth(g);
             g2.setColor(Theme.SURFACE_2);
             g2.fillRoundRect(0, 0, W - 1, H - 1, H, H);
             g2.setColor(Theme.LINE);
             g2.drawRoundRect(0, 0, W - 1, H - 1, H, H);
-            int active = Theme.mode() == Theme.Mode.DARK ? 0 : 1;
-            for (int i = 0; i < 2; i++) {
-                int x = 3 + i * (W / 2 - 3);
+            int active = java.util.Arrays.asList(modes).indexOf(Theme.mode());
+            int slotW = W / 3;
+            for (int i = 0; i < 3; i++) {
+                int x = 3 + i * slotW;
                 if (i == active) {
-                    g2.setColor(Theme.CORAL);
-                    g2.fillRoundRect(x, 3, W / 2 - 3, H - 7, H - 7, H - 7);
+                    g2.setColor(Theme.NEON);
+                    g2.fillRoundRect(x, 3, slotW - 3, H - 7, H - 7, H - 7);
                 } else if (i == hover) {
-                    g2.setColor(Theme.CORAL_TINT);
-                    g2.fillRoundRect(x, 3, W / 2 - 3, H - 7, H - 7, H - 7);
+                    g2.setColor(Theme.NEON_TINT);
+                    g2.fillRoundRect(x, 3, slotW - 3, H - 7, H - 7, H - 7);
                 }
-                g2.setColor(i == active ? Theme.ON_CORAL : Theme.TEXT_MUTED);
-                int cx = x + (W / 2 - 3) / 2;
-                int cy = H / 2 - 1;
+                g2.setColor(i == active ? Theme.ON_NEON : Theme.TEXT_MUTED);
                 if (i == 0) {
-                    java.awt.geom.Area moon = new java.awt.geom.Area(new java.awt.geom.Ellipse2D.Float(cx - 6, cy - 6, 12, 12));
-                    moon.subtract(new java.awt.geom.Area(new java.awt.geom.Ellipse2D.Float(cx - 2, cy - 9, 12, 12)));
-                    g2.fill(moon);
-                } else {
-                    g2.fillOval(cx - 3, cy - 3, 7, 7);
-                    g2.setStroke(new java.awt.BasicStroke(1.6f, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
-                    for (int r = 0; r < 8; r++) {
-                        double a = Math.PI / 4 * r;
-                        g2.drawLine(cx + (int) Math.round(Math.cos(a) * 6), cy + (int) Math.round(Math.sin(a) * 6),
-                                cx + (int) Math.round(Math.cos(a) * 8), cy + (int) Math.round(Math.sin(a) * 8));
+                    // Neon Matrix is the default appearance; keep its label explicit.
+                    g2.setFont(Theme.SMALL_BOLD);
+                    java.awt.FontMetrics fm = g2.getFontMetrics();
+                    int tx = x + (slotW - 3 - fm.stringWidth(labels[i])) / 2;
+                    g2.drawString(labels[i], tx, H / 2 + fm.getAscent() / 2 - 2);
+                } else if (i == 1) {
+                    // Sun icon represents Cyber Light.
+                    int cx = x + (slotW - 3) / 2;
+                    int cy = H / 2;
+                    g2.setStroke(new java.awt.BasicStroke(1.8f, java.awt.BasicStroke.CAP_ROUND,
+                            java.awt.BasicStroke.JOIN_ROUND));
+                    g2.drawOval(cx - 5, cy - 5, 10, 10);
+                    for (int ray = 0; ray < 8; ray++) {
+                        double angle = ray * Math.PI / 4.0;
+                        int x1 = cx + (int) Math.round(Math.cos(angle) * 8);
+                        int y1 = cy + (int) Math.round(Math.sin(angle) * 8);
+                        int x2 = cx + (int) Math.round(Math.cos(angle) * 11);
+                        int y2 = cy + (int) Math.round(Math.sin(angle) * 11);
+                        g2.drawLine(x1, y1, x2, y2);
                     }
+                } else {
+                    // Crescent moon icon represents Cyber Midnight.
+                    int cx = x + (slotW - 3) / 2;
+                    int cy = H / 2;
+                    g2.fillOval(cx - 7, cy - 8, 16, 16);
+                    g2.setColor(i == active ? Theme.NEON : (i == hover ? Theme.NEON_TINT : Theme.SURFACE_2));
+                    g2.fillOval(cx - 1, cy - 10, 14, 14);
                 }
             }
             g2.dispose();
         }
     }
 
-    /** Brand mark: a charcoal tile with a coral half, echoing the two-tone palette. */
+    private static Theme.Mode nextTheme(Theme.Mode current) {
+        return switch (current) {
+            case CYBER_GREEN -> Theme.Mode.CYBER_LIGHT;
+            case CYBER_LIGHT -> Theme.Mode.CYBER_MIDNIGHT;
+            case CYBER_MIDNIGHT -> Theme.Mode.CYBER_GREEN;
+        };
+    }
+
+    private static String themeName(Theme.Mode mode) {
+        return switch (mode) {
+            case CYBER_GREEN -> "Neon Matrix";
+            case CYBER_LIGHT -> "Cyber Light";
+            case CYBER_MIDNIGHT -> "Cyber Midnight";
+        };
+    }
+
+    /** Brand mark: a charcoal tile with a neon half, echoing the two-tone palette. */
     private static final class LogoMark extends JComponent {
         LogoMark() {
             setPreferredSize(new Dimension(30, 30));
@@ -327,12 +358,21 @@ public final class MainFrame extends JFrame {
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = Theme.smooth(g);
-            g2.setColor(Theme.CORAL);
-            g2.fillRoundRect(2, 2, 26, 26, 9, 9);
+            g2.setColor(Theme.NEON);
+            g2.fillRoundRect(2, 2, 26, 26, 8, 8);
             g2.setColor(Theme.CHARCOAL);
-            g2.fillRoundRect(8, 8, 14, 7, 4, 4);
-            g2.setColor(Theme.CORAL_LIGHT);
-            g2.fillRoundRect(8, 17, 14, 5, 4, 4);
+            g2.fillRoundRect(7, 7, 16, 16, 5, 5);
+            g2.setColor(Theme.NEON_LIGHT);
+            g2.setStroke(new java.awt.BasicStroke(1.7f, java.awt.BasicStroke.CAP_ROUND,
+                    java.awt.BasicStroke.JOIN_ROUND));
+            g2.drawLine(11, 15, 14, 18);
+            g2.drawLine(14, 18, 19, 11);
+            g2.setColor(Theme.NEON_BRIGHT);
+            for (int i = 0; i < 4; i++) {
+                int p = 7 + i * 5;
+                g2.drawLine(p, 0, p, 3);
+                g2.drawLine(p, 27, p, 30);
+            }
             g2.dispose();
         }
     }

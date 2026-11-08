@@ -42,8 +42,13 @@ public final class PageReplacement {
     private PageReplacement() { }
 
     public static Result run(Algorithm algorithm, List<Integer> references, int frameCount) {
-        if (references.isEmpty()) {
-            throw new InputException("The reference string is empty.");
+        if (algorithm == null || references == null || references.isEmpty()) {
+            throw new InputException("Choose a page-replacement algorithm and enter a non-empty reference string.");
+        }
+        for (int i = 0; i < references.size(); i++) {
+            if (references.get(i) == null || references.get(i) < 0) {
+                throw new InputException("Page reference " + (i + 1) + " must be a non-negative page number.");
+            }
         }
         if (frameCount < 1) {
             throw new InputException("Number of frames must be at least 1.");

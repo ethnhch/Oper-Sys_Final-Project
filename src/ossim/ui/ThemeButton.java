@@ -15,7 +15,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 
 /**
- * Flat rounded button in three weights: PRIMARY (coral fill, used once per screen for Run), SECONDARY
+ * Flat rounded button in three weights: PRIMARY (neon fill, used once per screen for Run), SECONDARY
  * (charcoal with outline) and GHOST (text only, for table row actions). Still a {@link JButton}, so keyboard
  * activation, focus and the GUI tests work unchanged.
  */
@@ -35,7 +35,7 @@ final class ThemeButton extends JButton {
         setRolloverEnabled(true);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         setFont(kind == Kind.PRIMARY ? Theme.BODY_BOLD : kind == Kind.GHOST ? Theme.SMALL_BOLD : Theme.BODY);
-        setForeground(kind == Kind.PRIMARY ? Theme.ON_CORAL : kind == Kind.GHOST ? Theme.TEXT_MUTED : Theme.TEXT);
+        setForeground(kind == Kind.PRIMARY ? Theme.ON_NEON : kind == Kind.GHOST ? Theme.TEXT_MUTED : Theme.TEXT);
         setMargin(kind == Kind.GHOST ? new Insets(4, 8, 4, 8) : new Insets(7, 14, 7, 14));
         setIconTextGap(7);
         Icon glyph = Glyph.forLabel(text, getForeground());
@@ -58,7 +58,7 @@ final class ThemeButton extends JButton {
     private void setHover(boolean value) {
         hover = value;
         if (kind == Kind.GHOST) {
-            setForeground(value ? Theme.CORAL_LIGHT : Theme.TEXT_MUTED);
+            setForeground(value ? Theme.NEON_LIGHT : Theme.TEXT_MUTED);
         }
         repaint();
     }
@@ -79,24 +79,24 @@ final class ThemeButton extends JButton {
         int arc = 10;
         switch (kind) {
             case PRIMARY -> {
-                g2.setColor(!isEnabled() ? Theme.LINE : pressed ? Theme.CORAL_DEEP : hover ? Theme.CORAL_LIGHT : Theme.CORAL);
+                g2.setColor(!isEnabled() ? Theme.LINE : pressed ? Theme.NEON_DEEP : hover ? Theme.NEON_LIGHT : Theme.NEON);
                 g2.fillRoundRect(0, 0, w, h, arc, arc);
             }
             case SECONDARY -> {
-                g2.setColor(pressed ? Theme.INSET : hover ? Theme.alpha(Theme.CORAL, 38) : Theme.SURFACE_2);
+                g2.setColor(pressed ? Theme.INSET : hover ? Theme.alpha(Theme.NEON, 38) : Theme.SURFACE_2);
                 g2.fillRoundRect(0, 0, w, h, arc, arc);
-                g2.setColor(hover || pressed ? Theme.CORAL : Theme.LINE);
+                g2.setColor(hover || pressed ? Theme.NEON : Theme.LINE);
                 g2.drawRoundRect(0, 0, w, h, arc, arc);
             }
             case GHOST -> {
                 if (hover || pressed) {
-                    g2.setColor(Theme.alpha(Theme.CORAL, pressed ? 60 : 30));
+                    g2.setColor(Theme.alpha(Theme.NEON, pressed ? 60 : 30));
                     g2.fillRoundRect(0, 0, w, h, arc, arc);
                 }
             }
         }
         if (isFocusOwner()) {
-            g2.setColor(Theme.alpha(Theme.CORAL_LIGHT, 200));
+            g2.setColor(Theme.alpha(Theme.NEON_LIGHT, 200));
             g2.setStroke(new BasicStroke(1.5f));
             g2.drawRoundRect(1, 1, w - 2, h - 2, arc, arc);
         }
